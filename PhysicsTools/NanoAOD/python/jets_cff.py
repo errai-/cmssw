@@ -4,7 +4,7 @@ from Configuration.Eras.Modifier_run2_nanoAOD_92X_cff import run2_nanoAOD_92X
 from Configuration.Eras.Modifier_run2_nanoAOD_94X2016_cff import run2_nanoAOD_94X2016
 
 from  PhysicsTools.NanoAOD.common_cff import *
-
+from RecoJets.JetProducers.ak4PFJetsBetaStar_cfi import *
 
 
 ##################### User floats producers, selectors ##########################
@@ -75,6 +75,11 @@ bJetVars = cms.EDProducer("JetRegressionVarProducer",
     #elesrc = cms.InputTag("slimmedElectrons")
 )
 
+jercVars = cms.EDProducer("BetaStarPackedCandidateVarProducer",
+    srcJet = cms.InputTag("slimmedJets"),
+    srcPF = cms.InputTag("packedPFCandidates"),
+    maxDR = cms.double(0.4)
+)
 
 slimmedJetsWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
      src = cms.InputTag("slimmedJets"),
@@ -94,7 +99,10 @@ slimmedJetsWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
          vtx3deL = cms.InputTag("bJetVars:vtx3deL"),
          ptD = cms.InputTag("bJetVars:ptD"),
          genPtwNu = cms.InputTag("bJetVars:genPtwNu"),
-         
+         chFPV0EF = cms.InputTag("jercVars:chargedFromPV0EnergyFraction"),
+         chFPV1EF = cms.InputTag("jercVars:chargedFromPV1EnergyFraction"),
+         chFPV2EF = cms.InputTag("jercVars:chargedFromPV2EnergyFraction"),
+         chFPV3EF = cms.InputTag("jercVars:chargedFromPV3EnergyFraction"),         
          ),
      userInts = cms.PSet(
         tightId = cms.InputTag("tightJetId"),
@@ -211,6 +219,10 @@ jetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         chEmEF = Var("chargedEmEnergyFraction()", float, doc="charged Electromagnetic Energy Fraction", precision= 6),
         neEmEF = Var("neutralEmEnergyFraction()", float, doc="neutral Electromagnetic Energy Fraction", precision= 6),
         muEF = Var("muonEnergyFraction()", float, doc="muon Energy Fraction", precision= 6),
+        chFPV0EF = Var("userFloat('chFPV0EF')", float, doc="charged energy fraction with fromPV==0 (removed by the CHS method), w.r.t. Raw (un    corrected) CHS jet energy. Previously called betastar.", precision= 6),
+        chFPV1EF = Var("userFloat('chFPV1EF')", float, doc="charged energy fraction with fromPV==1 (included by the CHS method), w.r.t. Raw (u    ncorrected) CHS jet energy.", precision= 6),
+        chFPV2EF = Var("userFloat('chFPV2EF')", float, doc="charged energy fraction with fromPV==2 (included by the CHS method), w.r.t. Raw (u    ncorrected) CHS jet energy.", precision= 6),
+        chFPV3EF = Var("userFloat('chFPV3EF')", float, doc="charged energy fraction with fromPV==3 (included by the CHS method), w.r.t. Raw (u    ncorrected) CHS jet energy.", precision= 6),
     )
 )
 
@@ -532,7 +544,7 @@ run2_miniAOD_80XLegacy.toModify( genJetFlavourTable, jetFlavourInfos = cms.Input
 run2_nanoAOD_92X.toModify( genJetFlavourTable, jetFlavourInfos = cms.InputTag("genJetFlavourAssociation"),)
 
 #before cross linking
-jetSequence = cms.Sequence(tightJetId+tightJetIdLepVeto+bJetVars+slimmedJetsWithUserData+jetCorrFactorsNano+updatedJets+tightJetIdAK8+tightJetIdLepVetoAK8+slimmedJetsAK8WithUserData+jetCorrFactorsAK8+updatedJetsAK8+chsForSATkJets+softActivityJets+softActivityJets2+softActivityJets5+softActivityJets10+finalJets+finalJetsAK8)
+jetSequence = cms.Sequence(tightJetId+tightJetIdLepVeto+bJetVars+jercVars+slimmedJetsWithUserData+jetCorrFactorsNano+updatedJets+tightJetIdAK8+tightJetIdLepVetoAK8+slimmedJetsAK8WithUserData+jetCorrFactorsAK8+updatedJetsAK8+chsForSATkJets+softActivityJets+softActivityJets2+softActivityJets5+softActivityJets10+finalJets+finalJetsAK8)
 
 from RecoJets.JetProducers.QGTagger_cfi import  QGTagger
 qgtagger80x=QGTagger.clone(srcJets="slimmedJets",srcVertexCollection="offlineSlimmedPrimaryVertices")
