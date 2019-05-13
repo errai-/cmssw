@@ -49,10 +49,10 @@ public:
     srcPF_(consumes<edm::View<T>>(iConfig.getParameter<edm::InputTag>("srcPF"))),
     maxDR_( iConfig.getParameter<double>("maxDR") )
   {
-    produces<edm::ValueMap<float>>("chargedEnergyFractionFromPV0");
-    produces<edm::ValueMap<float>>("chargedEnergyFractionFromPV1");
-    produces<edm::ValueMap<float>>("chargedEnergyFractionFromPV2");
-    produces<edm::ValueMap<float>>("chargedEnergyFractionFromPV3");
+    produces<edm::ValueMap<float>>("chargedFromPV0EnergyFraction");
+    produces<edm::ValueMap<float>>("chargedFromPV1EnergyFraction");
+    produces<edm::ValueMap<float>>("chargedFromPV2EnergyFraction");
+    produces<edm::ValueMap<float>>("chargedFromPV3EnergyFraction");
   }
   ~BetaStarVarProducer() override {};
 
@@ -99,10 +99,10 @@ BetaStarVarProducer<T>::produce(edm::StreamID streamID, edm::Event& iEvent, cons
     if (dRMin<maxDR_) jet2pue[bestjet] += cand->energy();
   }
 
-  std::vector<float> chargedEnergyFractionFromPV0(nJet,-1);
-  std::vector<float> chargedEnergyFractionFromPV1(nJet,-1);
-  std::vector<float> chargedEnergyFractionFromPV2(nJet,-1);
-  std::vector<float> chargedEnergyFractionFromPV3(nJet,-1);
+  std::vector<float> chargedFromPV0EnergyFraction(nJet,-1);
+  std::vector<float> chargedFromPV1EnergyFraction(nJet,-1);
+  std::vector<float> chargedFromPV2EnergyFraction(nJet,-1);
+  std::vector<float> chargedFromPV3EnergyFraction(nJet,-1);
 
   for ( unsigned int ij = 0; ij < nJet; ++ij ) {
     auto ijet = srcJet->ptrAt(ij);
@@ -112,35 +112,35 @@ BetaStarVarProducer<T>::produce(edm::StreamID streamID, edm::Event& iEvent, cons
     auto chpuf2 = std::get<2>(vals);
     auto chpuf3 = std::get<3>(vals);
     //auto chef   = std::get<2>(vals);
-    chargedEnergyFractionFromPV0[ij] = chpuf0;
-    chargedEnergyFractionFromPV1[ij] = chpuf1;
-    chargedEnergyFractionFromPV2[ij] = chpuf2;
-    chargedEnergyFractionFromPV3[ij] = chpuf3;
+    chargedFromPV0EnergyFraction[ij] = chpuf0;
+    chargedFromPV1EnergyFraction[ij] = chpuf1;
+    chargedFromPV2EnergyFraction[ij] = chpuf2;
+    chargedFromPV3EnergyFraction[ij] = chpuf3;
   }
 
   std::unique_ptr<edm::ValueMap<float>> valuesFPV0(new edm::ValueMap<float>());
   edm::ValueMap<float>::Filler fillerFPV0(*valuesFPV0);
-  fillerFPV0.insert(srcJet,chargedEnergyFractionFromPV0.begin(),chargedEnergyFractionFromPV0.end());
+  fillerFPV0.insert(srcJet,chargedFromPV0EnergyFraction.begin(),chargedFromPV0EnergyFraction.end());
   fillerFPV0.fill();
-  iEvent.put(std::move(valuesFPV0),"chargedEnergyFractionFromPV0");
+  iEvent.put(std::move(valuesFPV0),"chargedFromPV0EnergyFraction");
 
   std::unique_ptr<edm::ValueMap<float>> valuesFPV1(new edm::ValueMap<float>());
   edm::ValueMap<float>::Filler fillerFPV1(*valuesFPV1);
-  fillerFPV1.insert(srcJet,chargedEnergyFractionFromPV1.begin(),chargedEnergyFractionFromPV1.end());
+  fillerFPV1.insert(srcJet,chargedFromPV1EnergyFraction.begin(),chargedFromPV1EnergyFraction.end());
   fillerFPV1.fill();
-  iEvent.put(std::move(valuesFPV1),"chargedEnergyFractionFromPV1");
+  iEvent.put(std::move(valuesFPV1),"chargedFromPV1EnergyFraction");
 
   std::unique_ptr<edm::ValueMap<float>> valuesFPV2(new edm::ValueMap<float>());
   edm::ValueMap<float>::Filler fillerFPV2(*valuesFPV2);
-  fillerFPV2.insert(srcJet,chargedEnergyFractionFromPV2.begin(),chargedEnergyFractionFromPV2.end());
+  fillerFPV2.insert(srcJet,chargedFromPV2EnergyFraction.begin(),chargedFromPV2EnergyFraction.end());
   fillerFPV2.fill();
-  iEvent.put(std::move(valuesFPV2),"chargedEnergyFractionFromPV2");
+  iEvent.put(std::move(valuesFPV2),"chargedFromPV2EnergyFraction");
 
   std::unique_ptr<edm::ValueMap<float>> valuesFPV3(new edm::ValueMap<float>());
   edm::ValueMap<float>::Filler fillerFPV3(*valuesFPV3);
-  fillerFPV3.insert(srcJet,chargedEnergyFractionFromPV3.begin(),chargedEnergyFractionFromPV3.end());
+  fillerFPV3.insert(srcJet,chargedFromPV3EnergyFraction.begin(),chargedFromPV3EnergyFraction.end());
   fillerFPV3.fill();
-  iEvent.put(std::move(valuesFPV3),"chargedEnergyFractionFromPV3");
+  iEvent.put(std::move(valuesFPV3),"chargedFromPV3EnergyFraction");
 }
 
 template <typename T>
