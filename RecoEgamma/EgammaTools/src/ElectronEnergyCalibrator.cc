@@ -40,8 +40,8 @@ calibrate(reco::GsfElectron &ele, unsigned int runNumber,
 	  const float smearNrSigma, 
 	  const ElectronEnergyCalibrator::EventType eventType) const
 {
-  const float scEtaAbs = std::abs(ele.superCluster()->eta());
-  const float et = ele.ecalEnergy() / cosh(scEtaAbs);
+  const double scEtaAbs = std::abs(ele.superCluster()->eta());
+  const double et = ele.ecalEnergy() / cosh(scEtaAbs);
 
   if (et < minEt_ || edm::isNotFinite(et) ) {
     std::array<float,EGEnergySysIndex::kNrSysErrs> retVal;
@@ -148,7 +148,8 @@ setEnergyAndSystVarations(const float scale,const float smearNrSigma,const float
   energyData[EGEnergySysIndex::kScaleDown] = calCombinedMom(ele,corrScaleDn,smear).first;
   energyData[EGEnergySysIndex::kSmearUp]   = calCombinedMom(ele,corrUp,smearUp).first;
   energyData[EGEnergySysIndex::kSmearDown] = calCombinedMom(ele,corrDn,smearDn).first;
-  
+
+
   const std::pair<float, float> combinedMomentum = calCombinedMom(ele,corr,smear);
   setEcalEnergy(ele,corr,smear);
   const float energyCorr =  combinedMomentum.first / oldP4.t();
