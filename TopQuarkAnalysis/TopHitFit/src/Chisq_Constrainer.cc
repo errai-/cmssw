@@ -223,15 +223,15 @@ bool solve_linear_system (const Matrix& H,
 //   [ -H  B.t ]   [ alpha ]     [ r ]
 //   [         ] * [       ]  =  [   ]
 //   [  B  Y   ]   [   d   ]     [ 0 ]
-// 
+//
 //  for alpha and d.
-// 
+//
 //  Also returns the inverse matrices:
-// 
+//
 //   [ W  V.t ]     [ -H  B.t ]
 //   [        ]  =  [         ] ^ -1
 //   [ V  U   ]     [  B  Y   ]
-// 
+//
 //  Returns true if successful, false if not.
 //
 {
@@ -259,18 +259,18 @@ bool solve_linear_system (const Matrix& H,
     Ai = A.inverse (ierr);
     if (ierr) {
       int allzero = 0;
-      for (int i=1; i<=nconstraints; i++) {
-    allzero = 1;
-    for (int j=1; j<=nconstraints; j++) {
-      if (A(i,j) != 0) {
-        allzero = 0;
-        break;
-      }
-    }
-    if (allzero) {
-      A(i,i) = 1;
-      break;
-    }
+      for (int i=1; i<=nconstraints; ++i) {
+        allzero = 1;
+        for (int j=1; j<=nconstraints; ++j) {
+          if (A(i,j) != 0) {
+            allzero = 0;
+            break;
+          }
+        }
+        if (allzero) {
+          A(i,i) = 1;
+          break;
+        }
       }
       if (!allzero) return false;
     }
@@ -283,8 +283,7 @@ bool solve_linear_system (const Matrix& H,
   // and the solution vector.
   W = Ai.sub (1, nconstraints, 1, nconstraints);
   if (nbadvars > 0) {
-    U = Ai.sub (nconstraints+1, nconstraints+nbadvars,
-                nconstraints+1, nconstraints+nbadvars);
+    U = Ai.sub (nconstraints+1, nconstraints+nbadvars, nconstraints+1, nconstraints+nbadvars);
     V = Ai.sub (nconstraints+1, nconstraints+nbadvars, 1, nconstraints);
     d = xx.sub (nconstraints+1, nconstraints+nbadvars);
   }
@@ -359,8 +358,8 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
 //   Returns a value < 0 if the fit failed to converge.
 //
 {
-  // Check that the various matrices we've been passed have consistent
-  // dimensionalities.
+  // (1) Initialization.
+  // Check that the various matrices we've been passed have consistent dimensionalities.
   int nvars = x.num_row();
   assert (nvars == G_i.num_col());
   assert (nvars == xm.num_row());
@@ -386,13 +385,8 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
   Matrix By (nbadvars, nconstraints);      // Gradients wrt y
 
   // (2) Evaluate the constraints at the starting point.
-  // If the starting point is rejected as invalid,
-  // give up and return an error.
-  if (! call_constraint_fcn (constraint_calculator, x, y, F, Bx, By)) {
-      //    cout << "Bad initial values!";
-      //    return -1000;
-      return -999.0;
-  }
+  // If the starting point is rejected as invalid, give up and return an error.
+  if (! call_constraint_fcn (constraint_calculator, x, y, F, Bx, By)) return -999.0;
 
   // (3) Initialize variables for the fitting loop.
   double constraint_sum_last = -1000;
@@ -418,17 +412,11 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
     Matrix H = E.T() * Bx;
     Row_Vector r = c.T() * Bx + d.T() * By - F;
 
-    // (6) Solve the linearized system for the new values
-    // of the Lagrange multipliers
+    // (6) Solve the linearized system for the new values of the Lagrange multipliers
     // $\alpha$ and the new value for the displacements d.
     Column_Vector alpha (nvars);
     Column_Vector d1 (nbadvars);
-    if (!solve_linear_system (H, Y, By, r,
-                              alpha, d1, W, U, V)) {
-        ///      cout << "singular matrix!";
-        //      return -1000;
-        return -998.0;
-    }
+    if (!solve_linear_system (H, Y, By, r, alpha, d1, W, U, V)) return -998.0; // Singular matrix
 
     // (7) Compute the new values for the displacements c and the chisq.
     Column_Vector c1 = -E * alpha;
@@ -450,78 +438,59 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
     // (10) Evaluate the constraints at the new point.
     // If the point is rejected, we have to try to cut the step.
     // We accept the step if:
-    //  The constraint sum is below the convergence threshold
-    //    constraint_sum_eps, or
+    //  The constraint sum is below the convergence threshold constraint_sum_eps, or
     //  This is the first iteration, or
     //  The constraint sum has decreased since the last iteration.
-    // Otherwise, the constraints have gotten worse, and we
-    // try to cut the step.
-    while (! call_constraint_fcn (constraint_calculator, x, y, F, Bx, By) ||
-       ((constraint_sum = norm_infinity (F))
-              > _args.constraint_sum_eps() &&
-        nit > 0 &&
-        constraint_sum > constraint_sum_last))
+    // Otherwise, the constraints have gotten worse, and we try to cut the step.
+    while (! call_constraint_fcn (constraint_calculator, x, y, F, Bx, By) or
+       ((constraint_sum = norm_infinity (F)) > _args.constraint_sum_eps() and nit > 0 and constraint_sum > constraint_sum_last))
     {
-
       // Doing step cutting...
-      if (nit > 0 && _args.printfit() && ncut == 0) {
-    cout << "(" << chisq << " " << chisq_last << ") ";
-      }
+      if (nit > 0 and _args.printfit() and ncut == 0) cout << "(" << chisq << " " << chisq_last << ") ";
 
       // (10a) If this is the first time we've tried to cut this step,
       // test to see if the chisq is stationary.  If it hasn't changed
       // since the last iteration, try a directed step.
-      if (ncut == 0 &&
-      abs (chisq - chisq_last) < _args.chisq_diff_eps()) {
+      if (ncut == 0 and fabs (chisq - chisq_last) < _args.chisq_diff_eps()) {
+        // Trying a directed step now.
+        // Try to make the smallest step which satisfies the
+        // (linearized) constraints.
+        if (_args.printfit()) cout << " directed step ";
 
-    // Trying a directed step now.
-    // Try to make the smallest step which satisfies the
-    // (linearized) constraints.
-    if (_args.printfit())
-      cout << " directed step ";
+        // (10a.i) Solve the linearized system for $\beta$ and
+        // the y-displacement vector $\delta$.
+        Column_Vector beta (nconstraints);
+        Column_Vector delta (nbadvars);
+        solve_linear_system (H, Y, save_By, save_negF, beta, delta, W, U, V);
 
-    // (10a.i) Solve the linearized system for $\beta$ and
-    // the y-displacement vector $\delta$.
-    Column_Vector beta (nconstraints);
-    Column_Vector delta (nbadvars);
-    solve_linear_system (H, Y, save_By, save_negF,
-                 beta, delta, W, U, V);
+        // (10a.ii) Get the x-displacement vector $\gamma$.
+        Column_Vector gamma = -E * beta;
 
-    // (10a.ii) Get the x-displacement vector $\gamma$.
-    Column_Vector gamma = -E * beta;
+        // (10a.iii) Find the destination of the directed step.
+        x = c + xm + gamma;
+        y = d + ym + delta;
 
-    // (10a.iii) Find the destination of the directed step.
-    x = c + xm + gamma;
-    y = d + ym + delta;
+        // (10a.iv) Accept this point if it's not rejected by the constraint
+        // function, and the constraints improve.
+        if (call_constraint_fcn (constraint_calculator, x, y, F, Bx, By) and
+            (constraint_sum = norm_infinity (F)) > 0 and (constraint_sum < constraint_sum_last)) {
 
-    // (10a.iv) Accept this point if it's not rejected by the constraint
-    // function, and the constraints improve.
-    if (call_constraint_fcn (constraint_calculator, x, y, F, Bx, By) &&
-        (constraint_sum = norm_infinity (F)) > 0 &&
-        (constraint_sum < constraint_sum_last)) {
+          // Accept this step.  Calculate the chisq and new displacement
+          // vectors.
+          chisq = chisq_last - scalar ((-save_negF + r*2) * beta);
+          c1 = x - xm;
+          d1 = y - ym;
 
-      // Accept this step.  Calculate the chisq and new displacement
-      // vectors.
-      chisq = chisq_last - scalar ((-save_negF + r*2) * beta);
-      c1 = x - xm;
-      d1 = y - ym;
-
-      // Exit from step cutting loop.
-      break;
-    }
+          // Exit from step cutting loop.
+          break;
+        }
       }
 
-      // If this is the first time we're cutting the step,
-      // initialize $\psi$.
-      if (ncut == 0)
-    psi_cut = scalar ((save_negF - r) * alpha);
+      // If this is the first time we're cutting the step, initialize $\psi$.
+      if (ncut == 0) psi_cut = scalar ((save_negF - r) * alpha);
 
       // (10b) Give up if we've tried to cut this step too many times.
-      if (++ncut > _args.max_cut()) {
-          //    cout << " Too many cut steps ";
-          //    return -1000;
-          return -997.0;
-      }
+      if (++ncut > _args.max_cut()) return -997.0;
 
       // (10c) Set up the size by which we're going to cut this step.
       // Normally, this is cutsize.  But if this is the first time we're
@@ -529,21 +498,16 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
       // size to twice the final cut size from the last step (provided
       // that it is less than cutsize).
       double this_cutsize = _args.cutsize();
-      if (ncut == 1 && last_step_cutsize < 1) {
-    this_cutsize = 2 * last_step_cutsize;
-    if (this_cutsize > _args.cutsize())
-      this_cutsize = _args.cutsize();
+      if (ncut == 1 and last_step_cutsize < 1) {
+        this_cutsize = 2 * last_step_cutsize;
+        if (this_cutsize > _args.cutsize()) this_cutsize = _args.cutsize();
       }
 
       // (10d) Keep track of the total amount by which we've cut this step.
       this_step_cutsize *= this_cutsize;
 
       // If it falls below min_tot_cutsize, give up.
-      if (this_step_cutsize < _args.min_tot_cutsize()) {
-          //    cout << "Cut size underflow ";
-          //    return -1000;
-          return -996.0;
-      }
+      if (this_step_cutsize < _args.min_tot_cutsize()) return -996.0;
 
       // (10e) Cut the step: calculate the new displacement vectors.
       double cutleft = 1 - this_cutsize;
@@ -552,13 +516,10 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
 
       // (10f) Calculate the new chisq.
       if (chisq_last >= 0) {
-    chisq = this_cutsize*this_cutsize * chisq +
-            cutleft*cutleft * chisq_last +
-               2*this_cutsize*cutleft * psi_cut;
-    psi_cut = this_cutsize * psi_cut + cutleft * chisq_last;
-      }
-      else
-    chisq = chisq_last;
+        chisq = this_cutsize*this_cutsize * chisq + cutleft*cutleft * chisq_last + 2*this_cutsize*cutleft * psi_cut;
+        psi_cut = this_cutsize * psi_cut + cutleft * chisq_last;
+      } else
+        chisq = chisq_last;
 
       // Log what we've done.
       if (_args.printfit()) {
@@ -585,26 +546,21 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
     double chisq_b = 0;
     if (_args.use_G()) {
       chisq_b = scalar (c1.T() * G * c1) + scalar (d1.T() * Y * d1);
-      if (chisq >= 0 &&
-      abs ((chisq - chisq_b) / chisq) > _args.chisq_test_eps()) {
-    cout << chisq << " " << chisq_b
-         << "lost precision?\n";
-    abort ();
+      if (chisq >= 0 and fabs((chisq - chisq_b) / chisq) > _args.chisq_test_eps()) {
+        cout << chisq << " " << chisq_b << "lost precision?\n";
+        abort ();
       }
     }
 
     // Log what we're doing.
     if (_args.printfit()) {
       cout << chisq << " ";
-      if (_args.use_G())
-    cout << chisq_b << " ";
+      if (_args.use_G()) cout << chisq_b << " ";
     }
 
-    double z2 = abs (chisq - chisq_last);
+    double z2 = fabs (chisq - chisq_last);
 
-    if (_args.printfit()) {
-      cout << constraint_sum << " " << z2 << "\n";
-    }
+    if (_args.printfit()) cout << constraint_sum << " " << z2 << "\n";
 
     c = c1;
     d = d1;
@@ -613,26 +569,17 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
 
     // (12) Test for convergence.  The conditions must be satisfied
     // for two iterations in a row.
-    if (chisq >= 0 && constraint_sum < _args.constraint_sum_eps() &&
-    z2 < _args.chisq_diff_eps())
-    {
+    if (chisq >= 0 and constraint_sum < _args.constraint_sum_eps() and z2 < _args.chisq_diff_eps()) {
       if (near_convergence) break;  // Converged!  Exit loop.
       near_convergence = true;
-    }
-    else
+    } else
       near_convergence = false;
 
     // (13) Give up if we've done this too many times.
-    if (++nit > _args.maxit()) {
-        //      cout << "too many iterations";
-        //      return -1000;
-        return -995.0;
-    }
-
+    if (++nit > _args.maxit()) return -995.0;
   } while (true);
 
   // (15) Ok, we have a successful fit!
-
 
   // Calculate the error matrices.
   Q = E * W * E.T();
@@ -641,25 +588,17 @@ double Chisq_Constrainer::fit (Constraint_Calculator& constraint_calculator,
 
   // And the vectors of pull functions.
   pullx = Column_Vector (nvars);
-  for (int i=1; i<=nvars; i++) {
+  for (int i=1; i<=nvars; ++i) {
     double a = Q(i,i);
-    if (a < 0)
-      pullx(i) = c(i) / sqrt (-a);
-    else {
-      pullx(i) = 0;
-      //      cout << " bad pull fcn for var " << i << " (" << a << ") ";
-    }
+    if (a < 0) pullx(i) = c(i) / sqrt (-a);
+    else       pullx(i) = 0;
   }
 
   pully = Column_Vector (nbadvars);
-  for (int i=1; i<=nbadvars; i++) {
+  for (int i=1; i<=nbadvars; ++i) {
     double a = 1 - Y(i,i)*R(i,i);
-    if (a > 0)
-      pully(i) = d(i) * sqrt (Y(i,i) / a);
-    else {
-      pully(i) = 0;
-      //      cout << " bad pull fcn for badvar " << i << " ";
-    }
+    if (a > 0) pully(i) = d(i) * sqrt (Y(i,i) / a);
+    else       pully(i) = 0;
   }
 
   // Finish calculation of Q.

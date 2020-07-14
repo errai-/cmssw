@@ -549,7 +549,6 @@ void pack_event (const Fourvec_Event& ev,
     G_i.sub (this_index, this_index, error_matrix (obj.p_error,
                                                    obj.phi_error,
                                                    obj.eta_error));
-
   }
 
   if (use_kt_flag) {
@@ -627,8 +626,7 @@ void unpack_event (Fourvec_Event& ev,
       nu.setPz (y(nu_z));
       adjust_e_for_mass (nu, 0);
       ev.set_nu_p (nu);
-    }
-    else {
+    } else {
       adjust_e_for_mass (nu, 0);
       ev.set_x_p (nu);
     }

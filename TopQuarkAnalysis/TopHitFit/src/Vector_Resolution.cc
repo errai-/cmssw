@@ -71,8 +71,7 @@ string field (string s, int i)
   string::size_type pos = 0;
   while (i > 0) {
     pos = s.find ('/', pos);
-    if (pos == string::npos)
-      return "";
+    if (pos == string::npos) return "";
     ++pos;
     --i;
   }
@@ -103,7 +102,6 @@ Vector_Resolution::Vector_Resolution ()
     _eta_res ("0,0,0"),
     _phi_res ("0,0,0"),
     _use_et  (false)
-
 {
 }
 
@@ -340,7 +338,7 @@ void smear_phi (Fourvec& v, double ee,
 //
 // Outputs:
 //   v -           The smeared 4-vector.
-// 
+//
 {
   double rot = res.pick (0, ee, engine);
   v.rotateZ (rot);
@@ -393,7 +391,7 @@ std::ostream& operator<< (std::ostream& s, const Vector_Resolution& r)
 //
 // Returns:
 //   The stream S.
-//   
+//
 {
   s << r._p_res << "/ " << r._eta_res << "/ " << r._phi_res;
   if (r._use_et)

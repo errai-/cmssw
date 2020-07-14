@@ -1,5 +1,3 @@
-//
-//
 // File: src/Lepjets_Event.h
 // Purpose: Represent a simple `event' consisting of leptons and jets.
 // Created: Jul, 2000, sss, based on run 1 mass analysis code.
@@ -9,27 +7,25 @@
 // Imported to CMSSW by Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>
 //
 
-
 /**
-    @file Lepjets_Event.cc
+  @file Lepjets_Event.cc
 
-    @brief Represent a simple event consisting of lepton(s) and jet(s).
-    See the documentation of header file Lepjets_Event.h for details.
+  @brief Represent a simple event consisting of lepton(s) and jet(s).
+  See the documentation of header file Lepjets_Event.h for details.
 
-    @author Scott Stuart Snyder <snyder@bnl.gov>
+  @author Scott Stuart Snyder <snyder@bnl.gov>
 
-    @par Creation date:
-    Jul 2000.
+  @par Creation date:
+  Jul 2000.
 
-    @par Modification History:
-    Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Imported to CMSSW.<br>
-    Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Added doxygen tags for automatic generation of documentation.
+  @par Modification History:
+  Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Imported to CMSSW.<br>
+  Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Added doxygen tags for automatic generation of documentation.
 
-    @par Terms of Usage:
-    With consent for the original author (Scott Snyder).
-
+  @par Terms of Usage:
+  With consent for the original author (Scott Snyder).
  */
 
 #include "TopQuarkAnalysis/TopHitFit/interface/Lepjets_Event.h"
@@ -38,14 +34,11 @@
 #include <cmath>
 #include <cassert>
 
-
 using std::stable_sort;
 using std::remove_if;
 using std::abs;
 
-
 namespace hitfit {
-
 
 Lepjets_Event::Lepjets_Event (int runnum, int evnum)
 //
@@ -113,7 +106,7 @@ int& Lepjets_Event::evnum ()
 }
 
 
-std::vector<Lepjets_Event_Lep>::size_type Lepjets_Event::nleps () const
+size_t Lepjets_Event::nleps () const
 //
 // Purpose: Return the length of the lepton list.
 //
@@ -125,7 +118,7 @@ std::vector<Lepjets_Event_Lep>::size_type Lepjets_Event::nleps () const
 }
 
 
-std::vector<Lepjets_Event_Jet>::size_type Lepjets_Event::njets () const
+size_t Lepjets_Event::njets () const
 //
 // Purpose: Return the length of the jet list.
 //
@@ -137,7 +130,7 @@ std::vector<Lepjets_Event_Jet>::size_type Lepjets_Event::njets () const
 }
 
 
-Lepjets_Event_Lep& Lepjets_Event::lep (std::vector<Lepjets_Event_Lep>::size_type  i)
+Lepjets_Event_Lep& Lepjets_Event::lep (size_t i)
 //
 // Purpose: Return the Ith lepton.
 //
@@ -153,7 +146,7 @@ Lepjets_Event_Lep& Lepjets_Event::lep (std::vector<Lepjets_Event_Lep>::size_type
 }
 
 
-Lepjets_Event_Jet& Lepjets_Event::jet (std::vector<Lepjets_Event_Jet>::size_type i)
+Lepjets_Event_Jet& Lepjets_Event::jet (size_t i)
 //
 // Purpose: Return the Ith jet.
 //
@@ -169,7 +162,7 @@ Lepjets_Event_Jet& Lepjets_Event::jet (std::vector<Lepjets_Event_Jet>::size_type
 }
 
 
-const Lepjets_Event_Lep& Lepjets_Event::lep (std::vector<Lepjets_Event_Lep>::size_type i) const
+const Lepjets_Event_Lep& Lepjets_Event::lep (size_t i) const
 //
 // Purpose: Return the Ith lepton.
 //
@@ -185,7 +178,7 @@ const Lepjets_Event_Lep& Lepjets_Event::lep (std::vector<Lepjets_Event_Lep>::siz
 }
 
 
-const Lepjets_Event_Jet& Lepjets_Event::jet (std::vector<Lepjets_Event_Jet>::size_type i) const
+const Lepjets_Event_Jet& Lepjets_Event::jet (size_t i) const
 //
 // Purpose: Return the Ith jet.
 //
@@ -222,6 +215,83 @@ const Fourvec& Lepjets_Event::met () const
 //
 {
   return _met;
+}
+
+
+double& Lepjets_Event::sumEt ()
+//
+// Purpose: Return the missing Et.
+//
+// Returns:
+//   The missing Et.
+//
+{
+  return _sumEt;
+}
+
+
+double Lepjets_Event::sumEt () const
+//
+// Purpose: Return the missing Et.
+//
+// Returns:
+//   The Sum of Et given by the MET object.
+//
+{
+  return _sumEt;
+}
+
+
+double Lepjets_Event::resHalfSumEt () const
+//
+// Purpose: Return the missing Et minus pt of the jets and lepton divided by two.
+// This approximates the absolute sum of Ex/Ey, outside of the central jets and lepton.
+//
+// Returns:
+//   The residual sum Et divided by two.
+//
+{
+  double resSumEt = sumEt();
+  for (const auto &lep : _leps) resSumEt -= lep.p().et();
+  for (const auto &jet : _jets) resSumEt -= jet.p().et();
+  return resSumEt/2.;
+}
+
+
+std::pair<double,double> Lepjets_Event::jetSumExEy () const
+//
+// Purpose: Return the Ex and Ey sums for all the jets.
+//
+// Returns:
+//   The sums of Ex/Ey for all the given jets.
+//
+{
+  double sumex = 0, sumey = 0;
+  for (const auto &jet : _jets) {
+    const double et  = jet.p().et();
+    const double phi = jet.p().phi();
+    sumex += fabs(et*cos(phi));
+    sumey += fabs(et*sin(phi));
+  }
+  return std::make_pair(sumex,sumey);
+}
+
+
+std::pair<double,double> Lepjets_Event::sumExEy () const
+//
+// Purpose: Return the approximative Ex and Ey sums for all objects.
+// For the two light and two b jets this is accurate.
+// The lepton is completely left out of the summation.
+// For the remaining objects, sumEt divided by two is used for approximation.
+// The resulting number is the best obtainable measure of errors for the MET and Kt x/y components.
+//
+// Returns:
+//   Approximative sum of Ex and Ey.
+//
+{
+  double halfSumEt = resHalfSumEt();
+  auto jetSums = jetSumExEy();
+  return std::make_pair(halfSumEt+jetSums.first,halfSumEt+jetSums.second);
 }
 
 
@@ -356,12 +426,8 @@ Fourvec Lepjets_Event::sum (int type) const
 //
 {
   Fourvec out;
-  for (std::vector<Lepjets_Event_Lep>::size_type  i=0; i < _leps.size(); i++)
-    if (_leps[i].type() == type)
-      out += _leps[i].p();
-  for (std::vector<Lepjets_Event_Jet>::size_type i=0; i < _jets.size(); i++)
-    if (_jets[i].type() == type)
-      out += _jets[i].p();
+  for (size_t i=0; i < _leps.size(); ++i) if (_leps[i].type() == type) out += _leps[i].p();
+  for (size_t i=0; i < _jets.size(); ++i) if (_jets[i].type() == type) out += _jets[i].p();
   return out;
 }
 
@@ -374,10 +440,8 @@ Fourvec Lepjets_Event::kt () const
 //   The event kt.
 {
   Fourvec v = _met;
-  for (std::vector<Lepjets_Event_Lep>::size_type i=0; i < _leps.size(); i++)
-    v += _leps[i].p();
-  for (std::vector<Lepjets_Event_Jet>::size_type i=0; i < _jets.size(); i++)
-    v += _jets[i].p();
+  for (size_t i=0; i < _leps.size(); ++i) v += _leps[i].p();
+  for (size_t i=0; i < _jets.size(); ++i) v += _jets[i].p();
   return v;
 }
 
@@ -416,12 +480,12 @@ void Lepjets_Event::smear (CLHEP::HepRandomEngine& engine, bool smear_dir /*= fa
 //
 {
   Fourvec before, after;
-  for (std::vector<Lepjets_Event_Lep>::size_type i=0; i < _leps.size(); i++) {
+  for (size_t i=0; i < _leps.size(); ++i) {
     before += _leps[i].p();
     _leps[i].smear (engine, smear_dir);
     after += _leps[i].p();
   }
-  for (std::vector<Lepjets_Event_Jet>::size_type i=0; i < _jets.size(); i++) {
+  for (size_t i=0; i < _jets.size(); ++i) {
     before += _jets[i].p();
     _jets[i].smear (engine, smear_dir);
     after += _jets[i].p();
@@ -450,11 +514,7 @@ std::vector<int> Lepjets_Event::jet_types() const
 //
 {
   std::vector<int> ret;
-  for (std::vector<Lepjets_Event_Jet>::size_type ijet =  0 ;
-       ijet != _jets.size() ;
-       ijet++) {
-    ret.push_back(jet(ijet).type());
-  }
+  for (size_t ijet = 0; ijet != _jets.size(); ++ijet) ret.emplace_back(jet(ijet).type());
   return ret;
 }
 
@@ -465,15 +525,13 @@ bool Lepjets_Event::set_jet_types(const std::vector<int>& _jet_types)
 // Return false if it fails, trus if it succeeds
 //
 {
-  if (_jets.size() != _jet_types.size()) {
-    return false;
-  }
+  if (_jets.size() != _jet_types.size()) return false;
+
   bool saw_hadw1 = false;
-  for (std::vector<Lepjets_Event_Jet>::size_type i=0; i < njets(); i++) {
+  for (size_t i=0; i < njets(); ++i) {
     int t = _jet_types[i];
     if (t == hadw1_label) {
-      if (saw_hadw1)
-        t = hadw2_label;
+      if (saw_hadw1) t = hadw2_label;
       saw_hadw1 = true;
     }
     jet (i).type() = t;
@@ -483,7 +541,6 @@ bool Lepjets_Event::set_jet_types(const std::vector<int>& _jet_types)
 
 
 namespace {
-
 
 struct Lepjets_Event_Cutter
 //
@@ -498,7 +555,6 @@ struct Lepjets_Event_Cutter
   double _eta_cut;
 };
 
-
 bool Lepjets_Event_Cutter::operator () (const Lepjets_Event_Lep& l) const
 //
 // Purpose: Object cut evaluator.
@@ -506,7 +562,6 @@ bool Lepjets_Event_Cutter::operator () (const Lepjets_Event_Lep& l) const
 {
   return ! (l.p().perp() > _pt_cut && abs (l.p().pseudoRapidity()) < _eta_cut);
 }
-
 
 } // unnamed namespace
 
@@ -524,11 +579,9 @@ int Lepjets_Event::cut_leps (double pt_cut, double eta_cut)
 //
 {
   _leps.erase (remove_if (_leps.begin(), _leps.end(),
-                          Lepjets_Event_Cutter (pt_cut, eta_cut)),
-               _leps.end ());
+                          Lepjets_Event_Cutter (pt_cut, eta_cut)), _leps.end ());
   return _leps.size ();
 }
-
 
 int Lepjets_Event::cut_jets (double pt_cut, double eta_cut)
 //
@@ -543,13 +596,11 @@ int Lepjets_Event::cut_jets (double pt_cut, double eta_cut)
 //
 {
   _jets.erase (remove_if (_jets.begin(), _jets.end(),
-                          Lepjets_Event_Cutter (pt_cut, eta_cut)),
-               _jets.end ());
+                          Lepjets_Event_Cutter (pt_cut, eta_cut)), _jets.end ());
   return _jets.size ();
 }
 
-
-void Lepjets_Event::trimjets (std::vector<Lepjets_Event_Jet>::size_type n)
+void Lepjets_Event::trimjets (size_t n)
 //
 // Purpose: Remove all but the first N jets.
 //
@@ -557,11 +608,9 @@ void Lepjets_Event::trimjets (std::vector<Lepjets_Event_Jet>::size_type n)
 //   n -           The number of jets to keep.
 //
 {
-  if (n >= _jets.size())
-    return;
+  if (n >= _jets.size()) return;
   _jets.erase (_jets.begin() + n, _jets.end());
 }
-
 
 std::ostream& Lepjets_Event::dump (std::ostream& s, bool full /*=false*/) const
 //
@@ -577,23 +626,21 @@ std::ostream& Lepjets_Event::dump (std::ostream& s, bool full /*=false*/) const
 {
   s << "Run: " << _runnum << "  Event: " << _evnum << "\n";
   s << "Leptons:\n";
-  for (std::vector<Lepjets_Event_Lep>::size_type i=0; i < _leps.size(); i++) {
+  for (size_t i=0; i < _leps.size(); ++i) {
     s << "  ";
     _leps[i].dump (s, full);
     s << "\n";
   }
   s << "Jets:\n";
-  for (std::vector<Lepjets_Event_Jet>::size_type i=0; i < _jets.size(); i++) {
+  for (size_t i=0; i < _jets.size(); ++i) {
     s << "  ";
     _jets[i].dump (s, full);
     s << "\n";
   }
   s << "Missing Et: " << _met << "\n";
-  if (_zvertex != 0)
-    s << "z-vertex: " << _zvertex << "\n";
+  if (_zvertex != 0) s << "z-vertex: " << _zvertex << "\n";
   return s;
 }
-
 
 std::string Lepjets_Event::jet_permutation() const
 //
@@ -605,11 +652,10 @@ std::string Lepjets_Event::jet_permutation() const
 //          h - Higgs to b-bbar
 //          ? - Unknown
 {
-    std::string permutation;
-    for (size_t jet = 0 ; jet != _jets.size() ; ++jet) {
-        permutation = permutation + hitfit::jetTypeString(_jets[jet].type());
-    }
-    return permutation;
+  std::string permutation;
+  for (size_t jet=0; jet < _jets.size(); ++jet)
+    permutation = permutation + hitfit::jetTypeString(_jets[jet].type());
+  return permutation;
 }
 
 /**
@@ -635,10 +681,4 @@ std::ostream& operator<< (std::ostream& s, const Lepjets_Event& ev)
   return ev.dump (s);
 }
 
-
 } // namespace hitfit
-
-
-
-
-
