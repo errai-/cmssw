@@ -134,18 +134,14 @@ Constrained_Top::Constrained_Top (const Constrained_Top_Args& args,
   }
 
   if (args.equal_side()) {
-      sprintf (buf, "(%d %d %d) = (%d %d %d)",
-               nu_label, lepton_label, lepb_label,
-               hadw1_label, hadw2_label, hadb_label);
-      _constrainer.add_constraint (buf);
+    sprintf (buf, "(%d %d %d) = (%d %d %d)", nu_label, lepton_label, lepb_label, hadw1_label, hadw2_label, hadb_label);
+    _constrainer.add_constraint (buf);
   }
 
   if (top_mass > 0) {
-    sprintf (buf, "(%d %d %d) = %f",
-             hadw1_label, hadw2_label, hadb_label, top_mass);
+    sprintf (buf, "(%d %d %d) = %f", hadw1_label, hadw2_label, hadb_label, top_mass);
     _constrainer.add_constraint (buf);
-  }
-  else {
+  } else {
     sprintf (buf, "(%d %d %d) = 0", hadw1_label, hadw2_label, hadb_label);
     _constrainer.mass_constraint (buf);
   }
@@ -222,15 +218,13 @@ void do_import (const Lepjets_Event& ev, double bmass, Fourvec_Event& fe)
 
   bool saw_lepb = false;
   bool saw_hadb = false;
-  for (std::vector<Lepjets_Event_Jet>::size_type j=0; j < ev.njets(); j++) {
-    if (ev.jet(j).type() == isr_label || ev.jet(j).type() == higgs_label)
-      continue;
+  for (size_t j=0; j < ev.njets(); ++j) {
+    if (ev.jet(j).type() == isr_label || ev.jet(j).type() == higgs_label) continue;
     double mass = 0;
-    if (ev.jet(j).type() == lepb_label && !saw_lepb) {
+    if (ev.jet(j).type() == lepb_label and !saw_lepb) {
       mass = bmass;
       saw_lepb = true;
-    }
-    else if (ev.jet(j).type() == hadb_label && !saw_hadb) {
+    } else if (ev.jet(j).type() == hadb_label and !saw_hadb) {
       mass = bmass;
       saw_hadb = true;
     }
@@ -238,9 +232,9 @@ void do_import (const Lepjets_Event& ev, double bmass, Fourvec_Event& fe)
   }
 
   fe.set_nu_p (ev.met());
-  Fourvec kt = ev.kt ();
-  fe.set_kt_error (ev.kt_res().sigma (kt.x()),
-                   ev.kt_res().sigma (kt.y()),
+  std::pair sumExEy = ev.sumExEy();
+  fe.set_kt_error (ev.kt_res().sigma(sumExEy.first),
+                   ev.kt_res().sigma(sumExEy.second),
                    0);
 }
 
@@ -274,9 +268,8 @@ void do_export (const Fourvec_Event& fe, Lepjets_Event& ev)
 //
 {
   ev.lep(0).p() = fe.obj(0).p;
-  for (std::vector<Lepjets_Event_Jet>::size_type j=0, k=1; j < ev.njets(); j++) {
-    if (ev.jet(j).type() == isr_label || ev.jet(j).type() == higgs_label)
-      continue;
+  for (size_t j=0, k=1; j < ev.njets(); ++j) {
+    if (ev.jet(j).type() == isr_label or ev.jet(j).type() == higgs_label) continue;
     ev.jet(j).p() = fe.obj(k++).p;
   }
 

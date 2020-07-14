@@ -1,5 +1,3 @@
-//
-//
 // File: hitfit/Top_Fit.h
 // Purpose: Handle jet permutations.
 // Created: Jul, 2000, sss, based on run 1 mass analysis code.
@@ -11,26 +9,25 @@
 
 
 /**
-    @file Top_Fit.h
+  @file Top_Fit.h
 
-    @brief Handle and fit jet permutations of an event.  This is the
-    primary interface between user's Lepjets_Event and HitFit kinematic
-    fitting algorithm.
+  @brief Handle and fit jet permutations of an event.  This is the
+  primary interface between user's Lepjets_Event and HitFit kinematic
+  fitting algorithm.
 
-    @author Scott Stuart Snyder <snyder@bnl.gov>
+  @author Scott Stuart Snyder <snyder@bnl.gov>
 
-    @par Creation date:
-    Jul 2000.
+  @par Creation date:
+  Jul 2000.
 
-    @par Modification History:
-    Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Imported to CMSSW.<br>
-    Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Added doxygen tags for automatic generation of documentation.
+  @par Modification History:
+  Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Imported to CMSSW.<br>
+  Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Added doxygen tags for automatic generation of documentation.
 
-    @par Terms of Usage:
-    With consent for the original author (Scott Snyder).
-
+  @par Terms of Usage:
+  With consent for the original author (Scott Snyder).
  */
 
 #ifndef HITFIT_TOP_FIT_H
@@ -46,30 +43,6 @@ namespace hitfit {
 
 
 class Lepjets_Event;
-class Fit_Results;
-
-
-//
-// Indices for the various results lists we make in Fit_Results.
-//
-/**
-    Indices for the various results lists we store in Fit_Results.
- */
-enum Lists
-{
-  all_list = 0,         // All events.
-  noperm_list = 1,      // All jet assignments are correct.
-  semicorrect_list = 2, // Jets assigned to the correct top.
-  limited_isr_list = 3, // Top three jets are not ISR.
-  topfour_list = 4,     // Top four jets are not ISR, any other jets are ISR.
-  btag_list = 5,        // All tagged jets were assigned as b-jets.
-  htag_list = 6,        // All tagged jets were assigned as b-jets or higgs.
-  n_lists = 7
-};
-
-
-//*************************************************************************
-
 
 /**
     @brief Hold on to parameters for the Top_Fit class.
@@ -229,7 +202,6 @@ private:
      within an instance of Top_Fit.
    */
   Constrained_Top_Args _args;
-
 };
 
 
@@ -275,15 +247,13 @@ public:
 
       @param ev Input: The event to fit, Output: the event after the fit.
 
-      @param nuz Input: A flag to indicate which neutrino solution to be used.
-      <br>
-      <b>FALSE</b> means use solution with smaller absolute value.<br>
-      <b>TRUE</b> means use solution with larger absolute value.
-
       @param umwhad The mass of hadronic  \f$ W- \f$ boson before the fit.
 
-      @param utmass The mass of the top quarks before fitting, averaged from
-      the values of leptonic and hadronic top quark mass.
+      @param umthad The mass of the hadronic top quark before fitting.
+
+      @param utmass The mass of the leptonic top quark before fitting.
+
+      @param nuz_store Store for the second neutrino solution.
 
       @param mt The mass of the top quark after fitting.
 
@@ -294,24 +264,14 @@ public:
       @param pully Pull quantities for poorly-measured variables.
    */
   double fit_one_perm (Lepjets_Event& ev,
-                       bool& nuz,
                        double& umwhad,
-                       double& utmass,
+                       double& umthad,
+                       double& umtlep,
+                       double& nuz_store,
                        double& mt,
                        double& sigmt,
                        Column_Vector& pullx,
                        Column_Vector& pully);
-
-  // Fit all jet permutations in EV.
-  /**
-     @brief Fit all jets permutations in ev.  This function returns
-     a Fit_Results object, which is not easy to extract information from.
-     Users are recommended to use the class RunHitFit as interface to fit
-     all permutations of all event.
-
-     @param ev Input: The event to fit, Output: the event after the fit.
-   */
-  Fit_Results fit (const Lepjets_Event& ev);
 
   // Print.
   friend std::ostream& operator<< (std::ostream& s, const Top_Fit& fitter);
@@ -329,8 +289,6 @@ private:
   double _hadw_mass;
 };
 
-
 } // namespace hitfit
-
 
 #endif // not HITFIT_TOP_FIT_H

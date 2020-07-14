@@ -1,5 +1,3 @@
-//
-//
 // File: src/Defaults_Text.cc
 // Purpose: A lightweight implementation of the Defaults interface
 //          that uses simple text files.
@@ -76,15 +74,12 @@ string strip (string s)
 //
 {
   string::size_type j = s.find_first_of (";#");
-  if (j == string::npos)
-    j = s.size();
+  if (j == string::npos) j = s.size();
 
-  while (j > 0 && isspace (s[j-1]))
-    --j;
+  while (j > 0 && isspace (s[j-1])) --j;
 
   string::size_type i = 0;
-  while (i < j && isspace (s[i]))
-    ++i;
+  while (i < j && isspace (s[i])) ++i;
 
   return string (s, i, j-i);
 }
@@ -218,8 +213,7 @@ void Defaults_Textrep::read_file (string file)
 //
 {
   // Just return if we weren't given a file.
-  if (file.empty())
-    return;
+  if (file.empty()) return;
 
   ifstream f (file.c_str());
   if (!f.good()) {
@@ -248,21 +242,19 @@ void Defaults_Textrep::process_args (int argc, char** argv)
 //
 {
   // Look for arguments starting with `--'.
-  for (int i=1; i < argc; i++) {
+  for (int i=1; i < argc; ++i) {
     if (argv[i][0] == '-' && argv[i][1] == '-') {
-
-      // Found one. 
+      // Found one.
       string l;
-      if (strchr (argv[i], '=') != nullptr)
+      if (strchr (argv[i], '=') != nullptr) {
         // It was of the form `--NAME=VALUE'.  Change to `NAME=VALUE'.
         l = argv[i] + 2;
-      else if (argv[i][2] == 'n' && argv[i][3] == 'o') {
+      } else if (argv[i][2] == 'n' && argv[i][3] == 'o') {
         // It was of the form `--noNAME'.  Change to `NAME=0'.
         l = argv[i] + 4;
         l += "=0";
-      }
-      else {
-        // It was of the form `--NAME'.  Change to `NAME=1'. 
+      } else {
+        // It was of the form `--NAME'.  Change to `NAME=1'.
         l = argv[i] + 2;
         l += "=1";
       }
@@ -286,18 +278,17 @@ string Defaults_Textrep::get_val (string name) const
 //   The value of the parameter.
 //
 {
+  std::string val;
 
-    std::string val;
-
-    if (_map.find(name) == _map.end()) {
+  if (_map.find(name) == _map.end()) {
     cerr << "can't find default for " << name << "\n";
     abort ();
-    } else {
+  } else {
     std::map<string,string>::const_iterator it = _map.find(name);
     val = it->second;
-    }
+  }
 
-    return val;
+  return val;
 }
 
 
@@ -468,12 +459,8 @@ std::ostream& operator<< (std::ostream& s, const Defaults_Text& def)
 //   The stream S.
 //
 {
-
-    for (std::map<std::string,std::string>::const_iterator it = def._rep->_map.begin() ;
-     it != def._rep->_map.end() ;
-     it++) {
-	 s << "[" << it->first << "] = [" << it->second << "]\n";
-    }
+  for (auto it = def._rep->_map.begin(); it != def._rep->_map.end(); ++it)
+    s << "[" << it->first << "] = [" << it->second << "]\n";
 
   return s;
 }

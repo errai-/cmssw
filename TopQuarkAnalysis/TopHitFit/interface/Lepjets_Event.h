@@ -1,5 +1,3 @@
-//
-//
 // File: hitfit/Lepjets_Event.h
 // Purpose: Represent a simple `event' consisting of leptons and jets.
 // Created: Jul, 2000, sss, based on run 1 mass analysis code.
@@ -19,24 +17,23 @@
 
 
 /**
-    @file Lepjets_Event.h
+  @file Lepjets_Event.h
 
-    @brief Represent a simple event consisting of lepton(s) and jet(s).
+  @brief Represent a simple event consisting of lepton(s) and jet(s).
 
-    @author Scott Stuart Snyder <snyder@bnl.gov>
+  @author Scott Stuart Snyder <snyder@bnl.gov>
 
-    @par Creation date:
-    Jul 2000.
+  @par Creation date:
+  Jul 2000.
 
-    @par Modification History:
-    Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Imported to CMSSW.<br>
-    Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Added doxygen tags for automatic generation of documentation.
+  @par Modification History:
+  Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Imported to CMSSW.<br>
+  Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Added doxygen tags for automatic generation of documentation.
 
-    @par Terms of Usage:
-    With consent for the original author (Scott Snyder).
-
+  @par Terms of Usage:
+  With consent for the original author (Scott Snyder).
  */
 
 #ifndef HITFIT_LEPJETS_EVENT_H
@@ -48,9 +45,7 @@
 #include <vector>
 #include <iosfwd>
 
-
 namespace hitfit {
-
 
 /**
     @class Lepjets_Event
@@ -106,12 +101,12 @@ public:
   /**
      @brief Return the number of leptons in the event.
    */
-  std::vector<Lepjets_Event_Lep>::size_type nleps () const;
+  size_t nleps () const;
 
   /**
      @brief Return the number of jets in the event.
    */
-  std::vector<Lepjets_Event_Jet>::size_type njets () const;
+  size_t njets () const;
 
   // Access leptons and jets.
 
@@ -120,28 +115,28 @@ public:
 
      @param i The lepton index position.
    */
-  Lepjets_Event_Lep& lep (std::vector<Lepjets_Event_Lep>::size_type i);
+  Lepjets_Event_Lep& lep (size_t i);
 
   /**
      @brief Return a reference to jet at index position <i>i</i>.
 
      @param i The jet index position.
    */
-  Lepjets_Event_Jet& jet (std::vector<Lepjets_Event_Jet>::size_type i);
+  Lepjets_Event_Jet& jet (size_t i);
 
   /**
      @brief Return a constant reference to lepton at index position <i>i</i>.
 
      @param i The lepton index position.
    */
-  const Lepjets_Event_Lep& lep (std::vector<Lepjets_Event_Lep>::size_type i) const;
+  const Lepjets_Event_Lep& lep (size_t i) const;
 
   /**
      @brief Return a constant reference to jet at index position <i>i</i>.
 
      @param i The jet index position.
    */
-  const Lepjets_Event_Jet& jet (std::vector<Lepjets_Event_Jet>::size_type i) const;
+  const Lepjets_Event_Jet& jet (size_t i) const;
 
   // Access missing Et.
   /**
@@ -165,6 +160,33 @@ public:
      @brief Return a const reference to the  \f$ k_{T} \f$  resolution.
    */
   const Resolution& kt_res () const;
+
+  // Access et sums.
+
+  /**
+     @brief Return the Et Sum given by the MET object.
+   */
+  double sumEt () const;
+
+  /**
+     @brief Return a reference to the Et Sum given by the MET object.
+   */
+  double& sumEt ();
+
+  /**
+     @brief Return the residual sum Et divided by two.
+   */
+  double resHalfSumEt () const;
+
+  /**
+     @brief Return the Ex and Ey sums for all the jets.
+   */
+  std::pair<double,double> jetSumExEy () const;
+
+  /**
+     @brief Returns the approximative sums of Ex and Ey.
+   */
+  std::pair<double,double> sumExEy () const;
 
   // Access the z-vertex.
 
@@ -277,10 +299,10 @@ public:
 
   // Remove objects failing pt and eta cuts.
   /**
-     @brief Remove leptons which fail transverse momentum  \f$ p_{T} \f$ 
+     @brief Remove leptons which fail transverse momentum  \f$ p_{T} \f$
      and pseudorapidity  \f$ \eta \f$  cut.
 
-     @param pt_cut Remove leptons which have transverse momentum  \f$ p_{T} \f$ 
+     @param pt_cut Remove leptons which have transverse momentum  \f$ p_{T} \f$
      less than this value, in GeV.
 
      @param eta_cut Remove leptons which have absolute
@@ -306,7 +328,7 @@ public:
 
      @param n The number of jets to keep.
    */
-  void trimjets (std::vector<Lepjets_Event_Jet>::size_type n);
+  void trimjets (size_t n);
 
   // Dump this object.
   /**
@@ -358,6 +380,11 @@ private:
   Resolution _kt_res;
 
   /**
+     Sum Et from missing transverse energy.
+   */
+  double _sumEt;
+
+  /**
      The  \f$ z- \f$ vertex of the event.
    */
   double _zvertex;
@@ -388,14 +415,9 @@ private:
   double _dnn;
 };
 
-
 // Print the object.
 std::ostream& operator<< (std::ostream& s, const Lepjets_Event& ev);
 
-
-
 } // namespace hitfit
 
-
 #endif // not HITFIT_LEPJETS_EVENT_H
-

@@ -71,8 +71,7 @@ bool get_field (string s, string::size_type i, double& x)
 //
 {
   string::size_type j = i;
-  while (j < s.size() && s[j] != ',' && !isdigit (s[j]) && s[j] != '.')
-    ++j;
+  while (j < s.size() && s[j] != ',' && !isdigit (s[j]) && s[j] != '.') ++j;
   if (j < s.size() && (isdigit (s[j]) || s[j] == '.')) {
     x = atof (s.c_str() + j);
     return true;
@@ -95,7 +94,7 @@ Resolution::Resolution (std::string s /*= ""*/)
 //   s -           String encoding the resolution parameters, as described
 //                 in the comments in the header.
 //
-	:_resolution_exponent(0)
+    :_resolution_exponent(0)
 {
   _inverse = false;
   _constant_sigma = 0;
@@ -105,15 +104,13 @@ Resolution::Resolution (std::string s /*= ""*/)
   // Skip spaces.
   double x;
   string::size_type i = 0;
-  while (i < s.size() && isspace (s[i]))
-    ++i;
+  while (i < s.size() && isspace (s[i])) ++i;
 
   // Check for the inverse flag.
   if (s[i] == '-') {
     _inverse = true;
     ++i;
-  }
-  else if (s[i] == '+') {
+  } else if (s[i] == '+') {
     ++i;
   }
 
@@ -182,25 +179,25 @@ bool Resolution::inverse () const
 
 double Resolution::C() const
 {
-    return _constant_sigma;
+  return _constant_sigma;
 }
 
 
 double Resolution::R() const
 {
-    return _resolution_sigma;
+  return _resolution_sigma;
 }
 
 
 double Resolution::m() const
 {
-    return _resolution_exponent;
+  return _resolution_exponent;
 }
 
 
 double Resolution::N() const
 {
-    return _noise_sigma;
+  return _noise_sigma;
 }
 
 
@@ -215,18 +212,15 @@ double Resolution::sigma (double p) const
 //   The uncertainty for a momentum P.
 //
 {
-  if (_inverse)
-    p = 1 / p;
+  if (_inverse) p = 1 / p;
 
-  return sqrt ((_constant_sigma*_constant_sigma*p +
-        _resolution_sigma*_resolution_sigma)*p +
-           _noise_sigma*_noise_sigma);
+  return sqrt ((_constant_sigma*_constant_sigma*p + _resolution_sigma*_resolution_sigma)*p + _noise_sigma*_noise_sigma);
 }
 
 
 double Resolution::pick (double x, double p, CLHEP::HepRandomEngine& engine) const
 //
-// Purpose: Given a value X, measured for an object with momentum P, 
+// Purpose: Given a value X, measured for an object with momentum P,
 //          pick a new value from a Gaussian distribution
 //          described by this resolution --- with mean X and width sigma(P).
 //
@@ -265,7 +259,7 @@ std::ostream& operator<< (std::ostream& s, const Resolution& r)
 //
 // Returns:
 //   The stream S.
-//   
+//
 {
   if (r._inverse) s << "-";
   s << r._constant_sigma << ","

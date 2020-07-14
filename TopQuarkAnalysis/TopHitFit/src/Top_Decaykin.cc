@@ -1,5 +1,3 @@
-//
-//
 // File: src/Top_Decaykin.cc
 // Purpose: Calculate some kinematic quantities for ttbar events.
 // Created: Jul, 2000, sss, based on run 1 mass analysis code.
@@ -11,26 +9,25 @@
 
 
 /**
-    @file Top_Decaykin.cc
+  @file Top_Decaykin.cc
 
-    @brief A class to hold functions to calculate kinematic quantities
-    of interest in \f$t\bar{t} \to \ell + 4 \mathrm{jets}\f$ events.
-    See the documentation for the header file Top_Decaykin.h for details.
+  @brief A class to hold functions to calculate kinematic quantities
+  of interest in \f$t\bar{t} \to \ell + 4 \mathrm{jets}\f$ events.
+  See the documentation for the header file Top_Decaykin.h for details.
 
-    @author Scott Stuart Snyder <snyder@bnl.gov>
+  @author Scott Stuart Snyder <snyder@bnl.gov>
 
-    @par Creation date:
-    Jul 2000.
+  @par Creation date:
+  Jul 2000.
 
-    @par Modification History:
-    Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Imported to CMSSW.<br>
-    Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
-    Added doxygen tags for automatic generation of documentation.
+  @par Modification History:
+  Apr 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Imported to CMSSW.<br>
+  Nov 2009: Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>:
+  Added doxygen tags for automatic generation of documentation.
 
-    @par Terms of Usage:
-    With consent for the original author (Scott Snyder).
-
+  @par Terms of Usage:
+  With consent for the original author (Scott Snyder).
  */
 
 #include "TopQuarkAnalysis/TopHitFit/interface/Top_Decaykin.h"
@@ -40,18 +37,14 @@
 #include <algorithm>
 #include <ostream>
 
-
 using std::sqrt;
 using std::abs;
 using std::swap;
 using std::ostream;
 
-
 namespace hitfit {
 
-
 namespace {
-
 
 /**
     @brief Sum the four-momenta of all leptons in an event.
@@ -117,8 +110,7 @@ bool Top_Decaykin::solve_nu_tmass (const Lepjets_Event& ev,
   double dd = sqrt (d);
   nuz1 = (-b + dd)/a;
   nuz2 = (-b - dd)/a;
-  if (abs (nuz1) > abs (nuz2))
-    swap (nuz1, nuz2);
+  if (abs (nuz1) > abs (nuz2)) swap (nuz1, nuz2);
 
   return discrim_flag;
 }
@@ -164,33 +156,23 @@ bool Top_Decaykin::solve_nu_tmass (const Lepjets_Event& ev,
   double b = 4 * alpha * cprime.z();
   double c = alpha*alpha - 4 * cprime.e()*cprime.e() * vnu.vect().perp2();
   double d = b*b - 2*a*c;
-  if (d < 0) {
-    discrim_flag = false;
-  }
+  if (d < 0) discrim_flag = false;
 
   if (discrim_flag) {
-
-      re_nuz1 = (-b + sqrt(d))/a ;
-      im_nuz1 = 0 ;
-      re_nuz2 = (-b - sqrt(d))/a ;
-      im_nuz2 = 0 ;
-      if (abs(re_nuz1) > abs(re_nuz2)) {
-          swap(re_nuz1,re_nuz2);
-      }
-
+    re_nuz1 = (-b + sqrt(d))/a ;
+    im_nuz1 = 0 ;
+    re_nuz2 = (-b - sqrt(d))/a ;
+    im_nuz2 = 0 ;
+    if (abs(re_nuz1) > abs(re_nuz2)) swap(re_nuz1,re_nuz2);
   } else {
-
-      // Take absolute value of the imaginary component of nuz, in case
-      // a is negative, before multiplying by +1 or -1 to get the upper-half
-      // or lower-half imaginary value.
-      re_nuz1   = -b / a;
-      im_nuz1   = -fabs(sqrt(-d)/a );
-      re_nuz2   = -b / a;
-      im_nuz2   =  fabs(sqrt(-d)/a );
-
-
+    // Take absolute value of the imaginary component of nuz, in case
+    // a is negative, before multiplying by +1 or -1 to get the upper-half
+    // or lower-half imaginary value.
+    re_nuz1   = -b / a;
+    im_nuz1   = -fabs(sqrt(-d)/a );
+    re_nuz2   = -b / a;
+    im_nuz2   =  fabs(sqrt(-d)/a );
   }
-
 
   return discrim_flag;
 }
@@ -236,8 +218,7 @@ bool Top_Decaykin::solve_nu (const Lepjets_Event& ev,
 
   nuz1 = (-b + sqrt (d))/2/a;
   nuz2 = (-b - sqrt (d))/2/a;
-  if (abs (nuz1) > abs (nuz2))
-    swap (nuz1, nuz2);
+  if (abs (nuz1) > abs (nuz2)) swap (nuz1, nuz2);
 
   return discrim_flag;
 }
@@ -282,36 +263,27 @@ bool Top_Decaykin::solve_nu (const Lepjets_Event& ev,
   double c = x*x - vnu.perp2() * vlep.e()*vlep.e();
 
   double d = b*b - 4*a*c;
-  if (d < 0) {
-    discrim_flag = false;
-  }
+  if (d < 0) discrim_flag = false;
 
   if (discrim_flag) {
-
-      re_nuz1 = (-b + sqrt(d))/2/a ;
-      im_nuz1 = 0.0 ;
-      re_nuz2 = (-b - sqrt(d))/2/a ;
-      im_nuz2 = 0.0 ;
-      if (fabs(re_nuz1) > fabs(re_nuz2)) {
-          swap(re_nuz1,re_nuz2);
-      }
-
+    re_nuz1 = (-b + sqrt(d))/2/a ;
+    im_nuz1 = 0.0 ;
+    re_nuz2 = (-b - sqrt(d))/2/a ;
+    im_nuz2 = 0.0 ;
+    if (fabs(re_nuz1) > fabs(re_nuz2)) swap(re_nuz1,re_nuz2);
   } else {
+    // Take absolute value of the imaginary component of nuz, in case
+    // a is negative, before multiplying by +1 or -1 to get the upper-half
+    // or lower-half imaginary value.
 
-      // Take absolute value of the imaginary component of nuz, in case
-      // a is negative, before multiplying by +1 or -1 to get the upper-half
-      // or lower-half imaginary value.
-
-      re_nuz1 = -b /2/a ;
-      im_nuz1 = -fabs(sqrt(-d)/a);
-      re_nuz2 = -b /2/a ;
-      im_nuz2 =  fabs(sqrt(-d)/a);
-
+    re_nuz1 = -b /2/a ;
+    im_nuz1 = -fabs(sqrt(-d)/a);
+    re_nuz2 = -b /2/a ;
+    im_nuz2 =  fabs(sqrt(-d)/a);
   }
 
   return discrim_flag;
 }
-
 
 Fourvec Top_Decaykin::hadw (const Lepjets_Event& ev)
 //
@@ -327,7 +299,6 @@ Fourvec Top_Decaykin::hadw (const Lepjets_Event& ev)
   return (ev.sum (hadw1_label) + ev.sum (hadw2_label));
 }
 
-
 Fourvec Top_Decaykin::hadw1 (const Lepjets_Event& ev)
 //
 // Purpose:
@@ -341,7 +312,6 @@ Fourvec Top_Decaykin::hadw1 (const Lepjets_Event& ev)
 {
   return ev.sum (hadw1_label);
 }
-
 
 Fourvec Top_Decaykin::hadw2 (const Lepjets_Event& ev)
 //
@@ -358,7 +328,6 @@ Fourvec Top_Decaykin::hadw2 (const Lepjets_Event& ev)
   return ev.sum (hadw2_label);
 }
 
-
 Fourvec Top_Decaykin::lepw (const Lepjets_Event& ev)
 //
 // Purpose: Sum up the appropriate 4-vectors to find the leptonic W.
@@ -372,7 +341,6 @@ Fourvec Top_Decaykin::lepw (const Lepjets_Event& ev)
 {
   return (leptons (ev) + ev.met ());
 }
-
 
 Fourvec Top_Decaykin::hadt (const Lepjets_Event& ev)
 //
@@ -388,7 +356,6 @@ Fourvec Top_Decaykin::hadt (const Lepjets_Event& ev)
   return (ev.sum (hadb_label) + hadw (ev));
 }
 
-
 Fourvec Top_Decaykin::lept (const Lepjets_Event& ev)
 //
 // Purpose: Sum up the appropriate 4-vectors to find the leptonic t.
@@ -402,7 +369,6 @@ Fourvec Top_Decaykin::lept (const Lepjets_Event& ev)
 {
   return (ev.sum (lepb_label) + lepw (ev));
 }
-
 
 ostream& Top_Decaykin::dump_ev (std::ostream& s, const Lepjets_Event& ev)
 //
@@ -431,7 +397,6 @@ ostream& Top_Decaykin::dump_ev (std::ostream& s, const Lepjets_Event& ev)
   return s;
 }
 
-
 double Top_Decaykin::cos_theta_star(const Fourvec& fermion,
                                     const Fourvec& W,
                                     const Fourvec& top)
@@ -446,21 +411,17 @@ double Top_Decaykin::cos_theta_star(const Fourvec& fermion,
 //   cos theta star
 //
 {
+  if (W.isLightlike() || W.isSpacelike()) return 100.0;
 
-    if (W.isLightlike() || W.isSpacelike()) {
-        return 100.0;
-    }
+  CLHEP::HepBoost BoostWCM(W.findBoostToCM());
 
-    CLHEP::HepBoost BoostWCM(W.findBoostToCM());
+  CLHEP::Hep3Vector boost_v3fermion = BoostWCM(fermion).vect();
+  CLHEP::Hep3Vector boost_v3top     = BoostWCM(top).vect();
 
-    CLHEP::Hep3Vector boost_v3fermion       = BoostWCM(fermion).vect();
-    CLHEP::Hep3Vector boost_v3top           = BoostWCM(top).vect();
+  double costhetastar = boost_v3fermion.cosTheta(-boost_v3top);
 
-    double costhetastar = boost_v3fermion.cosTheta(-boost_v3top);
-
-    return costhetastar;
+  return costhetastar;
 }
-
 
 double Top_Decaykin::cos_theta_star(const Lepjets_Event& ev)
 //
@@ -472,13 +433,8 @@ double Top_Decaykin::cos_theta_star(const Lepjets_Event& ev)
 //   cos theta star of lepton
 //
 {
-
-    return cos_theta_star(leptons(ev),
-                          lepw(ev),
-                          lept(ev));
-
+  return cos_theta_star(leptons(ev), lepw(ev), lept(ev));
 }
-
 
 double Top_Decaykin::cos_theta_star_lept(const Lepjets_Event& ev)
 //
@@ -490,11 +446,8 @@ double Top_Decaykin::cos_theta_star_lept(const Lepjets_Event& ev)
 //   cos theta star of lepton
 //
 {
-
-    return cos_theta_star(ev);
-
+  return cos_theta_star(ev);
 }
-
 
 double Top_Decaykin::cos_theta_star_hadt(const Lepjets_Event& ev)
 //
@@ -507,14 +460,7 @@ double Top_Decaykin::cos_theta_star_hadt(const Lepjets_Event& ev)
 //   absolute value of cos theta star
 //
 {
-
-    return fabs(cos_theta_star(hadw1(ev),
-                               hadw(ev),
-                               hadt(ev)));
-
+  return fabs(cos_theta_star(hadw1(ev), hadw(ev), hadt(ev)));
 }
 
-
 } // namespace hitfit
-
-

@@ -347,17 +347,17 @@ public:
      does not converge.
    */
   double fit (Constraint_Calculator& constraint_calculator,
-                      const Column_Vector& xm,
-                      Column_Vector& x,
-                      const Column_Vector& ym,
-                      Column_Vector& y,
-                      const Matrix& G_i,
-                      const Diagonal_Matrix& Y,
-                      Column_Vector& pullx,
-                      Column_Vector& pully,
-                      Matrix& Q,
-                      Matrix& R,
-                      Matrix& S) override;
+              const Column_Vector& xm,
+              Column_Vector& x,
+              const Column_Vector& ym,
+              Column_Vector& y,
+              const Matrix& G_i,
+              const Diagonal_Matrix& Y,
+              Column_Vector& pullx,
+              Column_Vector& pully,
+              Matrix& Q,
+              Matrix& R,
+              Matrix& S) override;
 
   // Print out any internal state to S.
 /**

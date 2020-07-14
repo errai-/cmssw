@@ -1,18 +1,15 @@
-//
-//
-
 /**
-    @file PatMETHitFitTranslator.cc
+  @file PatMETHitFitTranslator.cc
 
-    @brief Specialization of template class METTranslatorBase in the
-    package HitFit for pat::MET
+  @brief Specialization of template class METTranslatorBase in the
+  package HitFit for pat::MET
 
-    @author Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>
+  @author Haryo Sumowidagdo <Suharyo.Sumowidagdo@cern.ch>
 
-    @par Created
-    Sat Jun 27 17:49:32 2009 UTC
+  @par Created
+  Sat Jun 27 17:49:32 2009 UTC
 
-    @version $Id: PatMETHitFitTranslator.cc,v 1.7 2011/01/29 22:21:38 haryo Exp $
+  @version $Id: PatMETHitFitTranslator.cc,v 1.7 2011/01/29 22:21:38 haryo Exp $
  */
 
 
@@ -23,61 +20,49 @@
 
 namespace hitfit {
 
+using std::string;
 
 template<>
 METTranslatorBase<pat::MET>::METTranslatorBase()
 {
-    resolution_ = Resolution(std::string("0,0,12"));
+  resolution_ = Resolution(string("0,0,12"));
 } // METTranslatorBase<pat::MET>::METTranslatorBase()
 
-
 template<>
-METTranslatorBase<pat::MET>::METTranslatorBase(const std::string& ifile)
+METTranslatorBase<pat::MET>::METTranslatorBase(const string& ifile)
 {
-    const Defaults_Text defs(ifile);
-    std::string resolution_string(defs.get_string("met_resolution"));
-    resolution_ = Resolution(resolution_string);
-
-} // METTranslatorBase<pat::MET>::METTranslatorBase(const std::string& ifile)
-
+  const Defaults_Text defs(ifile);
+  string resolution_string(defs.get_string("met_resolution"));
+  resolution_ = Resolution(resolution_string);
+} // METTranslatorBase<pat::MET>::METTranslatorBase(const string& ifile)
 
 template<>
 METTranslatorBase<pat::MET>::~METTranslatorBase()
 {
 } // METTranslatorBase<pat::MET>::~METTranslatorBase()
 
-
 template<>
 Fourvec
-METTranslatorBase<pat::MET>::operator()(const pat::MET& m,
-                                        bool useObjEmbRes /* = false */)
+METTranslatorBase<pat::MET>::operator()(const pat::MET& m)
 {
-    double px = m.px();
-    double py = m.py();
+  double px = m.px();
+  double py = m.py();
 
-    return Fourvec (px,py,0.0,sqrt(px*px + py*py));
-
+  return Fourvec (px,py,0.0,sqrt(px*px + py*py));
 } // Fourvec METTranslatorBase<pat::MET>::operator()(const pat::MET& m)
 
-
-
 template<>
 Resolution
-METTranslatorBase<pat::MET>::KtResolution(const pat::MET& m,
-                                          bool useObjEmbRes /* = false */) const
+METTranslatorBase<pat::MET>::KtResolution(const pat::MET& m) const
 {
-    return resolution_;
+  return resolution_;
 } // Resolution METTranslatorBase<pat::MET>::KtResolution(const pat::MET& m)
 
-
-
 template<>
 Resolution
-METTranslatorBase<pat::MET>::METResolution(const pat::MET& m,
-                                           bool useObjEmbRes /* = false */) const
+METTranslatorBase<pat::MET>::METResolution(const pat::MET& m) const
 {
-    return KtResolution(m,useObjEmbRes);
+  return KtResolution(m);
 } // Resolution METTranslatorBase<pat::MET>::METResolution(const pat::MET& m)
-
 
 } // namespace hitfit

@@ -279,8 +279,7 @@ void Fourvec_Event::add (const FE_Obj& obj)
   if (_has_neutrino) {
     assert (!_objs.empty());
     _objs.insert (_objs.begin() + _objs.size() - 1, obj);
-  }
-  else
+  } else
     _objs.push_back (obj);
 
   // Maintain kt.
@@ -300,8 +299,7 @@ void Fourvec_Event::set_nu_p (const Fourvec& p)
   if (_has_neutrino) {
     _kt -= _objs.back().p;
     _objs.back().p = p;
-  }
-  else {
+  } else {
     _has_neutrino = true;
     _objs.push_back (FE_Obj (p, 0, nu_label, 0, 0, 0, false));
   }
