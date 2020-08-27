@@ -18,7 +18,7 @@
 
     @author Scott Stuart Snyder <snyder@bnl.gov>
 
-	@par Creation date:
+    @par Creation date:
     July 2000.
 
     @par Modification History:

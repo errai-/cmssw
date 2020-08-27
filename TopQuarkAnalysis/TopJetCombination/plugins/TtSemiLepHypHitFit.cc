@@ -17,10 +17,10 @@ TtSemiLepHypHitFit::~TtSemiLepHypHitFit() { }
 
 void
 TtSemiLepHypHitFit::buildHypo(edm::Event& evt,
-			      const edm::Handle<edm::View<reco::RecoCandidate> >& leps,
-			      const edm::Handle<std::vector<pat::MET> >& mets,
-			      const edm::Handle<std::vector<pat::Jet> >& jets,
-			      std::vector<int>& match, const unsigned int iComb)
+  const edm::Handle<edm::View<reco::RecoCandidate> >& leps,
+  const edm::Handle<std::vector<pat::MET> >& mets,
+  const edm::Handle<std::vector<pat::Jet> >& jets,
+  std::vector<int>& match, const unsigned int iComb)
 {
   edm::Handle<std::vector<int> > status;
   evt.getByToken(statusToken_, status);
@@ -46,8 +46,7 @@ TtSemiLepHypHitFit::buildHypo(edm::Event& evt,
   // -----------------------------------------------------
   // add jets
   // -----------------------------------------------------
-  if( !( partonsHadP->empty() || partonsHadQ->empty() ||
-	 partonsHadB->empty() || partonsLepB->empty() ) ) {
+  if( !( partonsHadP->empty() || partonsHadQ->empty() || partonsHadB->empty() || partonsLepB->empty() ) ) {
     setCandidate(partonsHadP, iComb, lightQ_   );
     setCandidate(partonsHadQ, iComb, lightQBar_);
     setCandidate(partonsHadB, iComb, hadronicB_);

@@ -158,29 +158,27 @@ private:
   /**
      The translator from AElectron to Lepjets_Event_Lep.
    */
-  LeptonTranslatorBase<AElectron>     _ElectronTranslator;
+  LeptonTranslatorBase<AElectron> _ElectronTranslator;
 
   /**
      The translator from AMuon to Lepjets_Event_Lep.
    */
-  LeptonTranslatorBase<AMuon>         _MuonTranslator;
+  LeptonTranslatorBase<AMuon>     _MuonTranslator;
 
   /**
      The translator from AJet to Lepjets_Event_Jet.
    */
-  JetTranslatorBase<AJet>             _JetTranslator;
+  JetTranslatorBase<AJet>         _JetTranslator;
 
   /**
      The translator from AMet to Fourvec.
    */
-  METTranslatorBase<AMet>             _METTranslator;
+  METTranslatorBase<AMet>         _METTranslator;
 
   /**
-     The internal event.
-     The internal event only contains lepton and missing
-     transverse energy.
+     The internal event, which only contains lepton and missing transverse energy.
    */
-  Lepjets_Event                       _event;
+  Lepjets_Event                   _event;
 
   /**
      The internal array of jets.
@@ -196,22 +194,25 @@ private:
      the assumed jet type and applying the appropriate jet energy
      correction.
    */
-  vector<AJet>                        _jets;
+  vector<AJet>                    _jets;
+  /**
+     Indicator for b jets
+   */
+  vector<bool>                    _isBJet;
+  /**
+     Indicator for light quark jets
+   */
+  vector<bool>                    _isLJet;
 
   /**
      The interface between the event and the fitting algorithm.
    */
-  Top_Fit                             _Top_Fit;
-
-  /**
-     The array of events with permutation information before fitting.
-   */
-  //vector<Lepjets_Event>          _Unfitted_Events;
+  Top_Fit                         _Top_Fit;
 
   /**
      The results of the kinematic fit.
    */
-  vector<Fit_Result>             _Fit_Results;
+  vector<Fit_Result>              _Fit_Results;
 
 public:
   /**
@@ -250,10 +251,10 @@ public:
             double                                 hadw_mass,
             double                                 top_mass):
       _ElectronTranslator(el),
-      _MuonTranslator(mu),
-      _JetTranslator(jet),
-      _METTranslator(met),
-      _event(0,0),
+      _MuonTranslator    (mu),
+      _JetTranslator     (jet),
+      _METTranslator     (met),
+      _event             (0,0),
       _Top_Fit(Top_Fit_Args(Defaults_Text(default_file)),lepw_mass,hadw_mass,top_mass)
   {}
 
@@ -272,7 +273,8 @@ public:
   {
     _event = Lepjets_Event(0,0);
     _jets.clear();
-    //_Unfitted_Events.clear();
+    _isBJet.clear();
+    _isLJet.clear();
     _Fit_Results.clear();
   }
 
@@ -315,9 +317,13 @@ public:
      @param jet The jet to be added into the internal event.
   */
   void
-  AddJet(const AJet& jet)
+  AddJet(const AJet& jet, bool isB, bool isL)
   {
-    if (_jets.size() < MAX_HITFIT_JET) _jets.push_back(jet);
+    if (_jets.size() < MAX_HITFIT_JET) {
+      _jets.emplace_back(jet);
+      _isBJet.push_back(isB);
+      _isLJet.push_back(isL);
+    }
   }
 
   /**
@@ -382,10 +388,10 @@ public:
       return 0;
     }
 
-    //_Unfitted_Events.clear();
     _Fit_Results.clear();
 
     // Prepare the array of jet types for permutation
+    // Both light quark jets are initially given hadw1_label, so that next_permutation behaves nicely.
     vector<int> jet_types (_jets.size(), unknown_label);
     jet_types[0] = lepb_label;
     jet_types[1] = hadb_label;
@@ -399,64 +405,67 @@ public:
 
     std::stable_sort(jet_types.begin(),jet_types.end());
 
-    // begin loop over all jet permutation
+    // begin loop over unique jet permutations
     do {
-      // Variables to be calculated only once per two neutrino solutions.
-      double umwhad = 0, umthad = 0, nuz_store = 0;
+      // Don't fit if the jet types don't match => saves much time.
+      bool typeAgreement = true;
+      for (size_t ijet = 0; ijet < 4; ++ijet) {
+        int jT = jet_types[ijet];
+        if (jT==hadw1_label) {
+          if (!_isLJet[ijet]) {
+            typeAgreement = false;
+            break;
+          }
+        } else if (jT==hadb_label or jT==lepb_label) {
+          if (!_isBJet[ijet]) {
+            typeAgreement = false;
+            break;
+          }
+        }
+      }
+      std::cout << typeAgreement << std::endl;
+      if (typeAgreement) {
+        // Variables to be calculated only once per two neutrino solutions.
+        double umwhad = 0, umthad = 0, nuz_store = 0;
 
-      // loop over two neutrino solution
-      for (int nusol = 0 ; nusol < 2 ; ++nusol) {
-        // Copy the event
-        Lepjets_Event fev = _event;
+        // loop over two neutrino solution
+        for (int nusol = 0 ; nusol < 2 ; ++nusol) {
+          // Copy the event
+          Lepjets_Event fev = _event;
 
-        // Add jets into the event, with the assumed type in accord with the permutation.
-        // The translator _JetTranslator will correctly return object of Lepjets_Event_Jet with
-        // jet energy correction applied in accord with the assumed jet type (b or light).
-        for (size_t j = 0; j != _jets.size(); ++j) fev.add_jet(_JetTranslator(_jets[j],jet_types[j]));
+          // Add jets into the event, with the assumed type in accord with the permutation.
+          // The translator _JetTranslator will correctly return object of Lepjets_Event_Jet with
+          // jet energy correction applied in accord with the assumed jet type (b or light).
+          for (size_t j = 0; j != _jets.size(); ++j) fev.add_jet(_JetTranslator(_jets[j],jet_types[j]));
 
-        // Clone fev (intended to be fitted event)
-        // to ufev (intended to be unfitted event)
-        //Lepjets_Event ufev = fev;
+          // Set jet types.
+          fev.set_jet_types(jet_types);
 
-        // Set jet types.
-        fev.set_jet_types(jet_types);
-        //ufev.set_jet_types(jet_types);
+          // Prepare the placeholders for unique kinematic quantities.
+          double umtlep = 0;
+          double mt, sigmt;
+          Column_Vector pullx, pully;
 
-        // Store the unfitted event
-        //_Unfitted_Events.push_back(ufev);
-
-        // Prepare the placeholders for unique kinematic quantities.
-        double umtlep = 0;
-        double mt, sigmt;
-        Column_Vector pullx, pully;
-
-        // Do the fit
-        double chisq = _Top_Fit.fit_one_perm(fev,
-                                             umwhad, umthad, umtlep,
-                                             nuz_store,
-                                             mt, sigmt,
-                                             pullx, pully);
-        // Store output of the fit
-        _Fit_Results.emplace_back(chisq,
-                                  fev,
-                                  pullx, pully,
-                                  umwhad, (umthad + umtlep)/2.,
-                                  mt, sigmt);
-      } // end loop over two neutrino solution
+          // Do the fit
+          double chisq = _Top_Fit.fit_one_perm(fev,
+                                               umwhad, umthad, umtlep,
+                                               nuz_store,
+                                               mt, sigmt,
+                                               pullx, pully);
+          // Store output of the fit
+          _Fit_Results.emplace_back(chisq,
+                                    fev,
+                                    pullx, pully,
+                                    umwhad,
+                                    (umthad + umtlep)/2.,
+                                    mt, sigmt);
+        } // end loop over two neutrino solution
+      }
     } while (std::next_permutation (jet_types.begin(), jet_types.end()));
-    // end loop over all jet permutations
+    // end loop over unique jet permutations
 
     return _Fit_Results.size();
   }
-
-  /**
-      @brief Return the unfitted events for all permutations.
-   */
-  //vector<Lepjets_Event>
-  //GetUnfittedEvent()
-  //{
-  //  return _Unfitted_Events;
-  //}
 
   /**
       @brief Return the results of fitting all permutations of the
