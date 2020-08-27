@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 #
-# produce hitFit hypothesis with all necessary 
+# produce hitFit hypothesis with all necessary
 # ingredients
 #
 
@@ -14,7 +14,7 @@ from TopQuarkAnalysis.TopJetCombination.TtSemiLepHypHitFit_cfi import *
 
 ## make hypothesis
 makeHypothesis_hitFitTask = cms.Task(
-    hitFitTtSemiLepEventHypothesis,
-    ttSemiLepHypHitFit
+  hitFitTtSemiLepEventHypothesis,
+  ttSemiLepHypHitFit
 )
 makeHypothesis_hitFit = cms.Sequence(makeHypothesis_hitFitTask)

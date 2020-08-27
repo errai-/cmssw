@@ -34,38 +34,6 @@ class TtSemiLepHitFitProducer : public edm::EDProducer {
   edm::EDGetTokenT<LeptonCollection>  lepsToken_;
   edm::EDGetTokenT<vector<pat::MET> > metsToken_;
 
-  /// maximal number of jets (-1 possible to indicate 'all')
-  int maxNJets_;
-  /// maximal number of combinations to be written to the event
-  int maxNComb_;
-
-  /// maximum eta value for muons, needed to limited range in which resolutions are provided
-  double maxEtaMu_;
-  /// maximum eta value for electrons, needed to limited range in which resolutions are provided
-  double maxEtaEle_;
-  /// maximum eta value for jets, needed to limited range in which resolutions are provided
-  double maxEtaJet_;
-
-  /// input tag for b-tagging algorithm
-  string bTagAlgo_;
-  /// min value of bTag for a b-jet
-  double minBTagValueBJet_;
-  /// max value of bTag for a non-b-jet
-  double maxBTagValueNonBJet_;
-  /// switch to tell whether to use b-tagging or not
-  bool useBTag_;
-
-  /// constraints
-  double mW_;
-  double mTop_;
-
-  /// jet correction level
-  string jetCorrectionLevel_;
-
-  /// jet energy scale
-  double jes_;
-  double jesB_;
-
   struct FitResult {
     int Status;
     double Chi2;
@@ -84,12 +52,44 @@ class TtSemiLepHitFitProducer : public edm::EDProducer {
 
   typedef hitfit::RunHitFit<pat::Electron,pat::Muon,pat::Jet,pat::MET> PatHitFit;
 
-  edm::FileInPath hitfitDefault_;
-  edm::FileInPath hitfitElectronResolution_;
-  edm::FileInPath hitfitMuonResolution_;
-  edm::FileInPath hitfitUdscJetResolution_;
-  edm::FileInPath hitfitBJetResolution_;
-  edm::FileInPath hitfitMETResolution_;
+  edm::FileInPath hfDefault_;
+  edm::FileInPath hfElectronResolution_;
+  edm::FileInPath hfMuonResolution_;
+  edm::FileInPath hfUdscJetResolution_;
+  edm::FileInPath hfBJetResolution_;
+  edm::FileInPath hfMETResolution_;
+
+  /// maximum eta value for muons, needed to limited range in which resolutions are provided
+  const double maxEtaMu_;
+  /// maximum eta value for electrons, needed to limited range in which resolutions are provided
+  const double maxEtaEle_;
+  /// maximum eta value for jets, needed to limited range in which resolutions are provided
+  const double maxEtaJet_;
+
+  /// maximal number of jets (-1 possible to indicate 'all')
+  const int maxNJets_;
+  /// maximal number of combinations to be written to the event
+  const int maxNComb_;
+
+  /// input tag for b-tagging algorithm
+  const string bTagAlgo_;
+  /// switch to tell whether to use b-tagging or not
+  const bool useBTag_;
+  /// min value of bTag for a b-jet
+  const double minBTagValueBJet_;
+  /// max value of bTag for a non-b-jet
+  const double maxBTagValueLJet_;
+
+  /// constraints
+  const double mW_;
+  const double mTop_;
+
+  /// jet correction level
+  const string jetCorrectionLevel_;
+
+  /// jet energy scale
+  const double jes_;
+  const double jesB_;
 
   hitfit::LeptonTranslatorBase<pat::Electron> electronTranslator_;
   hitfit::LeptonTranslatorBase<pat::Muon>     muonTranslator_;
@@ -104,47 +104,48 @@ TtSemiLepHitFitProducer<LeptonCollection>::TtSemiLepHitFitProducer(const edm::Pa
   jetsToken_               (consumes<vector<pat::Jet> >    (cfg.getParameter<edm::InputTag>("jets"))),
   lepsToken_               (consumes<LeptonCollection>     (cfg.getParameter<edm::InputTag>("leps"))),
   metsToken_               (consumes<vector<pat::MET> >    (cfg.getParameter<edm::InputTag>("mets"))),
-  maxNJets_                (cfg.getParameter<int>          ("maxNJets"            )),
-  maxNComb_                (cfg.getParameter<int>          ("maxNComb"            )),
-  bTagAlgo_                (cfg.getParameter<string>       ("bTagAlgo"            )),
-  minBTagValueBJet_        (cfg.getParameter<double>       ("minBDiscBJets"       )),
-  maxBTagValueNonBJet_     (cfg.getParameter<double>       ("maxBDiscLightJets"   )),
-  useBTag_                 (cfg.getParameter<bool>         ("useBTagging"         )),
-  mW_                      (cfg.getParameter<double>       ("mW"                  )),
-  mTop_                    (cfg.getParameter<double>       ("mTop"                )),
-  jetCorrectionLevel_      (cfg.getParameter<string>       ("jetCorrectionLevel"  )),
-  jes_                     (cfg.getParameter<double>       ("jes"                 )),
-  jesB_                    (cfg.getParameter<double>       ("jesB"                )),
 
   // The following five initializers read the config parameters for the
   // ASCII text files which contains the physics object resolutions.
-  hitfitDefault_           (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitDefault")           , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/setting/RunHitFitConfiguration.txt")))),
-  hitfitElectronResolution_(cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitElectronResolution"), edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafElectronResolution.txt")))),
-  hitfitMuonResolution_    (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitMuonResolution")    , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafMuonResolution.txt")))),
-  hitfitUdscJetResolution_ (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitUdscJetResolution") , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafUdscJetResolution.txt")))),
-  hitfitBJetResolution_    (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitBJetResolution")    , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafBJetResolution.txt")))),
-  hitfitMETResolution_     (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitMETResolution")     , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafKtResolution.txt")))),
+  hfDefault_           (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitDefault")           , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/setting/RunHitFitConfiguration.txt")))),
+  hfElectronResolution_(cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitElectronResolution"), edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafElectronResolution.txt")))),
+  hfMuonResolution_    (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitMuonResolution")    , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafMuonResolution.txt")))),
+  hfUdscJetResolution_ (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitUdscJetResolution") , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafUdscJetResolution.txt")))),
+  hfBJetResolution_    (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitBJetResolution")    , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafBJetResolution.txt")))),
+  hfMETResolution_     (cfg.getUntrackedParameter<edm::FileInPath>(string("hitfitMETResolution")     , edm::FileInPath(string("TopQuarkAnalysis/TopHitFit/data/resolution/tqafKtResolution.txt")))),
+
+  // Constants
+  maxEtaMu_                                              (2.4),
+  maxEtaEle_                                             (2.5),
+  maxEtaJet_                                             (2.5),
+  maxNJets_                     (cfg.getParameter<int>   ("maxNJets")),
+  maxNComb_                     (cfg.getParameter<int>   ("maxNComb")),
+  bTagAlgo_                     (cfg.getParameter<string>("bTagAlgo")),
+  useBTag_                      (cfg.getParameter<bool>  ("useBTagging")),
+  minBTagValueBJet_  (useBTag_ ? cfg.getParameter<double>("minBDiscBJets")     : 0),
+  maxBTagValueLJet_  (useBTag_ ? cfg.getParameter<double>("maxBDiscLightJets") : 1),
+  mW_                (cfg.getParameter<double>("mW")),
+  mTop_              (cfg.getParameter<double>("mTop")),
+  jetCorrectionLevel_(cfg.getParameter<string>("jetCorrectionLevel")),
+  jes_               (cfg.getParameter<double>("jes")),
+  jesB_              (cfg.getParameter<double>("jesB")),
 
   // The following four initializers instantiate the translator between PAT objects
   // and HitFit objects using the ASCII text files which contains the resolutions.
-  electronTranslator_(hitfitElectronResolution_.fullPath()),
-  muonTranslator_    (hitfitMuonResolution_.fullPath()),
-  jetTranslator_     (hitfitUdscJetResolution_.fullPath(), hitfitBJetResolution_.fullPath(), jetCorrectionLevel_, jes_, jesB_),
-  metTranslator_     (hitfitMETResolution_.fullPath())
+  electronTranslator_(hfElectronResolution_.fullPath()),
+  muonTranslator_    (hfMuonResolution_.fullPath()),
+  jetTranslator_     (hfUdscJetResolution_.fullPath(), hfBJetResolution_.fullPath(), jetCorrectionLevel_, jes_, jesB_),
+  metTranslator_     (hfMETResolution_.fullPath())
 {
   // Create an instance of RunHitFit and initialize it.
   HitFit = new PatHitFit(electronTranslator_,
                          muonTranslator_,
                          jetTranslator_,
                          metTranslator_,
-                         hitfitDefault_.fullPath(),
+                         hfDefault_.fullPath(),
                          mW_,
                          mW_,
                          mTop_);
-
-  maxEtaMu_  = 2.4;
-  maxEtaEle_ = 2.5;
-  maxEtaJet_ = 2.5;
 
   edm::LogVerbatim( "TopHitFit" )
     << "\n"
@@ -213,7 +214,7 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
   // or empty MET or less jets than partons
   // -----------------------------------------------------
 
-  const unsigned int nPartons = 4;
+  const int nPartons = 4;
 
   // Clear the internal state
   HitFit->clear();
@@ -234,13 +235,15 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
   }
 
   // Add jets into HitFit
-  unsigned int nJetsFound = 0;
-  for(unsigned iJet=0; iJet<(*jets).size() && (int)nJetsFound!=maxNJets_; ++iJet) {
-    double jet_abseta = std::abs((*jets)[iJet].eta());
-    if ( (*jets)[iJet].isCaloJet() )
-      jet_abseta = std::abs(((reco::CaloJet*) ((*jets)[iJet]).originalObject())->detectorP4().eta());
+  int nJetsFound = 0;
+  for(unsigned iJet=0; iJet<jets->size() and nJetsFound<maxNJets_; ++iJet) {
+    const auto &jet = jets->at(iJet);
+    double jet_abseta = std::abs(jet.eta());
+    if (jet.isCaloJet())
+      jet_abseta = std::abs(((reco::CaloJet*) jet.originalObject())->detectorP4().eta());
     if (jet_abseta <= maxEtaJet_) {
-      HitFit->AddJet((*jets)[iJet]);
+      double bTag = jet.bDiscriminator(bTagAlgo_);
+      HitFit->AddJet(jet, bTag > minBTagValueBJet_, bTag < maxBTagValueLJet_);
       ++nJetsFound;
     }
   }
@@ -266,64 +269,55 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
     // BEGIN PART WHICH EXTRACTS INFORMATION FROM HITFIT
     //
 
-    // Loop over all permutations and extract the information, save into a vector that is later sorted according to chi2
-    for (const auto &fit : hitFitResult) {
-      /*
-        Get jet permutation according to TQAF convention
-        11 : leptonic b
-        12 : hadronic b
-        13 : hadronic W
-        14 : hadronic W
-      */
-      vector<int> hitCombi(4);
+    /*
+      Get jet permutation according to TQAF convention
+      11 : leptonic b
+      12 : hadronic b
+      13 : hadronic W
+      14 : hadronic W
+    */
+    std::map<int,const int> type2idx = {{11, TtSemiLepEvtPartons::LepB},
+                                        {12, TtSemiLepEvtPartons::HadB},
+                                        {13, TtSemiLepEvtPartons::LightQ},
+                                        {14, TtSemiLepEvtPartons::LightQBar}};
+    //// Loop over all permutations and extract the information, save into a vector that is later sorted according to chi2
+    //for (const auto &fitProd : hitFitResult) {
+    //  const auto &fit = fitProd.ev();
+    //  vector<int> hitCombi(4);
 
-      // Get the number of jets and loop over the jets
-      const size_t nHitFitJet = fit.njets();
-      for (size_t jet = 0, nJets = fit.njets(); jet < ; ++jet) {
-        int jet_type = fit.jet(jet).type();
+    //  // Get the number of jets and loop over the jets
+    //  for (size_t jet = 0, nJets = fit.njets(); jet < nJets; ++jet) {
+    //    int jet_type = fit.jet(jet).type();
 
-        switch (jet_type) {
-          case 11: hitCombi[TtSemiLepEvtPartons::LepB     ] = jet;
-            break;
-          case 12: hitCombi[TtSemiLepEvtPartons::HadB     ] = jet;
-            break;
-          case 13: hitCombi[TtSemiLepEvtPartons::LightQ   ] = jet;
-            break;
-          case 14: hitCombi[TtSemiLepEvtPartons::LightQBar] = jet;
-            break;
-        }
-      }
+    //    if (jet_type>10 and jet_type<15)
+    //      hitCombi[type2idx[jet_type]] = jet;
+    //  }
 
-      // Store the kinematic quantities in the corresponding containers.
-      hitfit::Lepjets_Event_Jet hadP_ = fit.jet(hitCombi[TtSemiLepEvtPartons::LightQ   ]);
-      hitfit::Lepjets_Event_Jet hadQ_ = fit.jet(hitCombi[TtSemiLepEvtPartons::LightQBar]);
-      hitfit::Lepjets_Event_Jet hadB_ = fit.jet(hitCombi[TtSemiLepEvtPartons::HadB     ]);
-      hitfit::Lepjets_Event_Jet lepB_ = fit.jet(hitCombi[TtSemiLepEvtPartons::LepB     ]);
-      hitfit::Lepjets_Event_Lep lepL_ = fit.lep(0);
+    //  // Store the kinematic quantities in the corresponding containers.
+    //  hitfit::Lepjets_Event_Jet lepB_ = fit.jet(hitCombi[type2idx[11]]);
+    //  hitfit::Lepjets_Event_Jet hadB_ = fit.jet(hitCombi[type2idx[12]]);
+    //  hitfit::Lepjets_Event_Jet hadP_ = fit.jet(hitCombi[type2idx[13]]);
+    //  hitfit::Lepjets_Event_Jet hadQ_ = fit.jet(hitCombi[type2idx[14]]);
+    //  hitfit::Lepjets_Event_Lep lepL_ = fit.lep(0);
 
-      if (hitFitResult[fit].chisq() > 0 and (!useBTag_ // only take into account converged fits use btag information if chosen
-                           or (jets->at(hitCombi[TtSemiLepEvtPartons::LightQ   ]).bDiscriminator(bTagAlgo_) < maxBTagValueNonBJet_
-                           and jets->at(hitCombi[TtSemiLepEvtPartons::LightQBar]).bDiscriminator(bTagAlgo_) < maxBTagValueNonBJet_
-                           and jets->at(hitCombi[TtSemiLepEvtPartons::HadB     ]).bDiscriminator(bTagAlgo_) > minBTagValueBJet_
-                           and jets->at(hitCombi[TtSemiLepEvtPartons::LepB     ]).bDiscriminator(bTagAlgo_) > minBTagValueBJet_)))
-      {
-        FitResult result;
-        result.Status = 0;
-        result.Chi2 = hitFitResult[fit].chisq();
-        result.Prob = exp(-1.0*(hitFitResult[fit].chisq())/2.0);
-        result.MT   = hitFitResult[fit].mt();
-        result.SigMT= hitFitResult[fit].sigmt();
-        result.HadB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadB_.p().x(), hadB_.p().y(), hadB_.p().z(), hadB_.p().t()), math::XYZPoint()));
-        result.HadP = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadP_.p().x(), hadP_.p().y(), hadP_.p().z(), hadP_.p().t()), math::XYZPoint()));
-        result.HadQ = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadQ_.p().x(), hadQ_.p().y(), hadQ_.p().z(), hadQ_.p().t()), math::XYZPoint()));
-        result.LepB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepB_.p().x(), lepB_.p().y(), lepB_.p().z(), lepB_.p().t()), math::XYZPoint()));
-        result.LepL = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepL_.p().x(), lepL_.p().y(), lepL_.p().z(), lepL_.p().t()), math::XYZPoint()));
-        result.LepN = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(fittedEvent.met().x(), fittedEvent.met().y(), fittedEvent.met().z(), fittedEvent.met().t()), math::XYZPoint()));
-        result.JetCombi = hitCombi;
+    //  if (fitProd.chisq() > 0) {
+    //    FitResult result;
+    //    result.Status = 0;
+    //    result.Chi2 = fitProd.chisq();
+    //    result.Prob = exp(-1.0*(fitProd.chisq())/2.0);
+    //    result.MT   = fitProd.mt();
+    //    result.SigMT= fitProd.sigmt();
+    //    result.HadB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadB_.p().x(), hadB_.p().y(), hadB_.p().z(), hadB_.p().t()), math::XYZPoint()));
+    //    result.HadP = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadP_.p().x(), hadP_.p().y(), hadP_.p().z(), hadP_.p().t()), math::XYZPoint()));
+    //    result.HadQ = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadQ_.p().x(), hadQ_.p().y(), hadQ_.p().z(), hadQ_.p().t()), math::XYZPoint()));
+    //    result.LepB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepB_.p().x(), lepB_.p().y(), lepB_.p().z(), lepB_.p().t()), math::XYZPoint()));
+    //    result.LepL = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepL_.p().x(), lepL_.p().y(), lepL_.p().z(), lepL_.p().t()), math::XYZPoint()));
+    //    result.LepN = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(fit.met().x(), fit.met().y(), fit.met().z(), fit.met().t()), math::XYZPoint()));
+    //    result.JetCombi = hitCombi;
 
-        FitResultList.emplace_back(result);
-      }
-    }
+    //    FitResultList.emplace_back(result);
+    //  }
+    //}
   }
 
   // -----------------------------------------------------
@@ -332,15 +326,15 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
   // -----------------------------------------------------
   if (FitResultList.size()==0) { // in case no fit results were stored in the list
     // the kinFit getters return empty objects here
-    pPartonsHadP->push_back( pat::Particle() );
-    pPartonsHadQ->push_back( pat::Particle() );
-    pPartonsHadB->push_back( pat::Particle() );
-    pPartonsLepB->push_back( pat::Particle() );
-    pLeptons    ->push_back( pat::Particle() );
-    pNeutrinos  ->push_back( pat::Particle() );
+    pPartonsHadP->emplace_back( pat::Particle() );
+    pPartonsHadQ->emplace_back( pat::Particle() );
+    pPartonsHadB->emplace_back( pat::Particle() );
+    pPartonsLepB->emplace_back( pat::Particle() );
+    pLeptons    ->emplace_back( pat::Particle() );
+    pNeutrinos  ->emplace_back( pat::Particle() );
     // indices referring to the jet combination
     vector<int> invalidCombi;
-    for (unsigned int i = 0; i < nPartons; ++i) invalidCombi.push_back( -1 );
+    for (int i = 0; i < nPartons; ++i) invalidCombi.push_back( -1 );
     pCombi->push_back( invalidCombi );
     // chi2
     pChi2->push_back( -1. );
@@ -358,15 +352,13 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
     int iComb = 0;
     for (auto result = FitResultList.begin(); result != FitResultList.end(); ++result) {
       if (maxNComb_>=0 and ++iComb>maxNComb_) break;
-      // partons
-      pPartonsHadP->push_back( result->HadP );
-      pPartonsHadQ->push_back( result->HadQ );
-      pPartonsHadB->push_back( result->HadB );
-      pPartonsLepB->push_back( result->LepB );
-      // lepton
-      pLeptons->push_back( result->LepL );
-      // neutrino
-      pNeutrinos->push_back( result->LepN );
+      // physics objects
+      pPartonsHadP->emplace_back( result->HadP );
+      pPartonsHadQ->emplace_back( result->HadQ );
+      pPartonsHadB->emplace_back( result->HadB );
+      pPartonsLepB->emplace_back( result->LepB );
+      pLeptons    ->emplace_back( result->LepL );
+      pNeutrinos  ->emplace_back( result->LepN );
       // indices referring to the jet combination
       pCombi->push_back( result->JetCombi );
       // chi2
