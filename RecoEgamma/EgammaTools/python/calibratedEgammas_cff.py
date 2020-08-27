@@ -4,22 +4,18 @@ _correctionFile2016Legacy = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/L
 _correctionFile2017Nov17 = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2017_17Nov2017_v1_ele_unc"
 _correctionFile2017UL    = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2017_24Feb2020_runEtaR9Gain_v2"
 
-
-print("Inside calibratedEgammas")
-
 calibratedEgammaSettings = cms.PSet(minEtToCalibrate = cms.double(5.0),
                                     semiDeterministic = cms.bool(True),
                                     correctionFile = cms.string(_correctionFile2017UL),
                                     recHitCollectionEB = cms.InputTag('reducedEcalRecHitsEB'),
                                     recHitCollectionEE = cms.InputTag('reducedEcalRecHitsEE'),
                                     produceCalibratedObjs = cms.bool(True)
-)
+                                   )
 from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
 run2_miniAOD_80XLegacy.toModify(calibratedEgammaSettings,correctionFile = _correctionFile2016Legacy)
 
-from Configuration.Eras.Modifier_run2_miniAOD_94XFall17_cff import run2_miniAOD_94XFall17
-run2_miniAOD_80XLegacy.toModify(calibratedEgammaSettings,correctionFile = _correctionFile2017Nov17)
-
+from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
+run2_miniAOD_devel.toModify(calibratedEgammaSettings,correctionFile = _correctionFile2017UL)
 
 calibratedEgammaPatSettings = calibratedEgammaSettings.clone(
     recHitCollectionEB = cms.InputTag('reducedEgamma','reducedEBRecHits'),
@@ -44,7 +40,7 @@ ecalTrkCombinationRegression = cms.PSet(
         rangeMaxLowEt = cms.double(0.5),
         rangeMinHighEt = cms.double(0.0002),
         rangeMaxHighEt = cms.double(0.5),
-        lowEtHighEtBoundary = cms.double(50.),  
+        lowEtHighEtBoundary = cms.double(50.),
         forceHighEnergyTrainingIfSaturated = cms.bool(False),
         ebLowEtForestName = cms.string('electron_eb_ECALTRK_lowpt_var'),
         ebHighEtForestName = cms.string('electron_eb_ECALTRK_var'),
@@ -55,11 +51,11 @@ ecalTrkCombinationRegression = cms.PSet(
     minEOverPForComb=cms.double(0.025),
     maxEPDiffInSigmaForComb=cms.double(15.),
     maxRelTrkMomErrForComb=cms.double(10.),
-    
+
 )
 
 calibratedElectrons = cms.EDProducer("CalibratedElectronProducer",
-                                     calibratedEgammaSettings,                                   
+                                     calibratedEgammaSettings,
                                      epCombConfig = ecalTrkCombinationRegression,
                                      src = cms.InputTag('gedGsfElectrons'),
                                      )
@@ -67,13 +63,12 @@ calibratedElectrons = cms.EDProducer("CalibratedElectronProducer",
 calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducer",
                                         calibratedEgammaPatSettings,
                                         epCombConfig = ecalTrkCombinationRegression,
-                                        src = cms.InputTag('slimmedElectrons'), 
-                                        
-)
+                                        src = cms.InputTag('slimmedElectrons'),
+                                        )
 
 calibratedPhotons = cms.EDProducer("CalibratedPhotonProducer",
                                    calibratedEgammaSettings,
-                                   src = cms.InputTag('gedPhotons'),    
+                                   src = cms.InputTag('gedPhotons'),
                                   )
 calibratedPatPhotons = cms.EDProducer("CalibratedPatPhotonProducer",
                                       calibratedEgammaPatSettings,
