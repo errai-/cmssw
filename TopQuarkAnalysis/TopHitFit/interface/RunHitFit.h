@@ -323,6 +323,7 @@ public:
       _jets.emplace_back(jet);
       _isBJet.push_back(isB);
       _isLJet.push_back(isL);
+      //if (fabs(jet.eta())>2.4) std::cout << fabs(jet.eta()) << " " << isB << " " << isL << std::endl;
     }
   }
 
@@ -409,6 +410,7 @@ public:
     do {
       // Don't fit if the jet types don't match => saves much time.
       bool typeAgreement = true;
+      // Look exactly at the four leading jets.
       for (size_t ijet = 0; ijet < 4; ++ijet) {
         int jT = jet_types[ijet];
         if (jT==hadw1_label) {
@@ -423,7 +425,6 @@ public:
           }
         }
       }
-      std::cout << typeAgreement << std::endl;
       if (typeAgreement) {
         // Variables to be calculated only once per two neutrino solutions.
         double umwhad = 0, umthad = 0, nuz_store = 0;

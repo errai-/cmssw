@@ -117,7 +117,7 @@ TtSemiLepHitFitProducer<LeptonCollection>::TtSemiLepHitFitProducer(const edm::Pa
   // Constants
   maxEtaMu_                                              (2.4),
   maxEtaEle_                                             (2.5),
-  maxEtaJet_                                             (2.5),
+  maxEtaJet_                                             (5.2),
   maxNJets_                     (cfg.getParameter<int>   ("maxNJets")),
   maxNComb_                     (cfg.getParameter<int>   ("maxNComb")),
   bTagAlgo_                     (cfg.getParameter<string>("bTagAlgo")),
@@ -226,25 +226,35 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
     if ( !dynamic_cast<const reco::Muon*>(&((*leps)[0])) ) // assume electron if it is not a muon
       maxEtaLep = maxEtaEle_;
     for (unsigned iLep=0; iLep<(*leps).size(); ++iLep) {
-      if (std::abs((*leps)[iLep].eta()) <= maxEtaLep) {
+      if (fabs(leps->at(iLep).eta()) <= maxEtaLep) {
         HitFit->AddLepton((*leps)[iLep]);
         foundLepton = true;
-        break;
+      } else {
+        std::cout << "Issues with lepton eta. " << fabs(leps->at(iLep).eta()) << " vs. max. " << maxEtaLep << std::endl;
       }
+      break;
     }
   }
 
   // Add jets into HitFit
-  int nJetsFound = 0;
-  for(unsigned iJet=0; iJet<jets->size() and nJetsFound<maxNJets_; ++iJet) {
+  int nJetsFound = 0, nBJetsFound = 0, nLJetsFound = 0;
+  for (unsigned iJet=0; iJet<jets->size() and nJetsFound<maxNJets_; ++iJet) {
     const auto &jet = jets->at(iJet);
     double jet_abseta = std::abs(jet.eta());
     if (jet.isCaloJet())
       jet_abseta = std::abs(((reco::CaloJet*) jet.originalObject())->detectorP4().eta());
     if (jet_abseta <= maxEtaJet_) {
       double bTag = jet.bDiscriminator(bTagAlgo_);
-      HitFit->AddJet(jet, bTag > minBTagValueBJet_, bTag < maxBTagValueLJet_);
+      const bool isB = bTag > minBTagValueBJet_;
+      const bool isL = bTag <= maxBTagValueLJet_;
+      HitFit->AddJet(jet, isB, isL);
       ++nJetsFound;
+      if (isB) ++nBJetsFound;
+      if (isL) ++nLJetsFound;
+    } else {
+      std::cout << "Issues with jet eta. " << jet_abseta << " v. max. " << maxEtaJet_ << std::endl;
+      nJetsFound = -1;
+      break;
     }
   }
   *pJetsConsidered = nJetsFound;
@@ -255,7 +265,7 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
   // Run the kinematic fit and get how many permutations are possible
   // in the fit
   std::list<FitResult> FitResultList;
-  if (foundLepton and !mets->empty() and nJetsFound>=nPartons) {
+  if (foundLepton and !mets->empty() and nJetsFound>=nPartons and nBJetsFound>=2 and nLJetsFound>=2) {
     // Add missing transverse energy into HitFit
     HitFit->SetMet((*mets)[0]);
 
@@ -280,44 +290,44 @@ void TtSemiLepHitFitProducer<LeptonCollection>::produce(edm::Event& evt, const e
                                         {12, TtSemiLepEvtPartons::HadB},
                                         {13, TtSemiLepEvtPartons::LightQ},
                                         {14, TtSemiLepEvtPartons::LightQBar}};
-    //// Loop over all permutations and extract the information, save into a vector that is later sorted according to chi2
-    //for (const auto &fitProd : hitFitResult) {
-    //  const auto &fit = fitProd.ev();
-    //  vector<int> hitCombi(4);
+    // Loop over all permutations and extract the information, save into a vector that is later sorted according to chi2
+    for (const auto &fitProd : hitFitResult) {
+      const auto &fit = fitProd.ev();
+      vector<int> hitCombi(4);
 
-    //  // Get the number of jets and loop over the jets
-    //  for (size_t jet = 0, nJets = fit.njets(); jet < nJets; ++jet) {
-    //    int jet_type = fit.jet(jet).type();
+      // Get the number of jets and loop over the jets
+      for (size_t jet = 0, nJets = fit.njets(); jet < nJets; ++jet) {
+        int jet_type = fit.jet(jet).type();
 
-    //    if (jet_type>10 and jet_type<15)
-    //      hitCombi[type2idx[jet_type]] = jet;
-    //  }
+        if (jet_type>10 and jet_type<15)
+          hitCombi[type2idx[jet_type]] = jet;
+      }
 
-    //  // Store the kinematic quantities in the corresponding containers.
-    //  hitfit::Lepjets_Event_Jet lepB_ = fit.jet(hitCombi[type2idx[11]]);
-    //  hitfit::Lepjets_Event_Jet hadB_ = fit.jet(hitCombi[type2idx[12]]);
-    //  hitfit::Lepjets_Event_Jet hadP_ = fit.jet(hitCombi[type2idx[13]]);
-    //  hitfit::Lepjets_Event_Jet hadQ_ = fit.jet(hitCombi[type2idx[14]]);
-    //  hitfit::Lepjets_Event_Lep lepL_ = fit.lep(0);
+      // Store the kinematic quantities in the corresponding containers.
+      hitfit::Lepjets_Event_Jet lepB_ = fit.jet(hitCombi[type2idx[11]]);
+      hitfit::Lepjets_Event_Jet hadB_ = fit.jet(hitCombi[type2idx[12]]);
+      hitfit::Lepjets_Event_Jet hadP_ = fit.jet(hitCombi[type2idx[13]]);
+      hitfit::Lepjets_Event_Jet hadQ_ = fit.jet(hitCombi[type2idx[14]]);
+      hitfit::Lepjets_Event_Lep lepL_ = fit.lep(0);
 
-    //  if (fitProd.chisq() > 0) {
-    //    FitResult result;
-    //    result.Status = 0;
-    //    result.Chi2 = fitProd.chisq();
-    //    result.Prob = exp(-1.0*(fitProd.chisq())/2.0);
-    //    result.MT   = fitProd.mt();
-    //    result.SigMT= fitProd.sigmt();
-    //    result.HadB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadB_.p().x(), hadB_.p().y(), hadB_.p().z(), hadB_.p().t()), math::XYZPoint()));
-    //    result.HadP = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadP_.p().x(), hadP_.p().y(), hadP_.p().z(), hadP_.p().t()), math::XYZPoint()));
-    //    result.HadQ = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadQ_.p().x(), hadQ_.p().y(), hadQ_.p().z(), hadQ_.p().t()), math::XYZPoint()));
-    //    result.LepB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepB_.p().x(), lepB_.p().y(), lepB_.p().z(), lepB_.p().t()), math::XYZPoint()));
-    //    result.LepL = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepL_.p().x(), lepL_.p().y(), lepL_.p().z(), lepL_.p().t()), math::XYZPoint()));
-    //    result.LepN = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(fit.met().x(), fit.met().y(), fit.met().z(), fit.met().t()), math::XYZPoint()));
-    //    result.JetCombi = hitCombi;
+      if (fitProd.chisq() > 0) {
+        FitResult result;
+        result.Status = 0;
+        result.Chi2 = fitProd.chisq();
+        result.Prob = exp(-1.0*(fitProd.chisq())/2.0);
+        result.MT   = fitProd.mt();
+        result.SigMT= fitProd.sigmt();
+        result.HadB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadB_.p().x(), hadB_.p().y(), hadB_.p().z(), hadB_.p().t()), math::XYZPoint()));
+        result.HadP = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadP_.p().x(), hadP_.p().y(), hadP_.p().z(), hadP_.p().t()), math::XYZPoint()));
+        result.HadQ = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(hadQ_.p().x(), hadQ_.p().y(), hadQ_.p().z(), hadQ_.p().t()), math::XYZPoint()));
+        result.LepB = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepB_.p().x(), lepB_.p().y(), lepB_.p().z(), lepB_.p().t()), math::XYZPoint()));
+        result.LepL = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(lepL_.p().x(), lepL_.p().y(), lepL_.p().z(), lepL_.p().t()), math::XYZPoint()));
+        result.LepN = pat::Particle(reco::LeafCandidate(0, math::XYZTLorentzVector(fit.met().x(), fit.met().y(), fit.met().z(), fit.met().t()), math::XYZPoint()));
+        result.JetCombi = hitCombi;
 
-    //    FitResultList.emplace_back(result);
-    //  }
-    //}
+        FitResultList.emplace_back(result);
+      }
+    }
   }
 
   // -----------------------------------------------------
