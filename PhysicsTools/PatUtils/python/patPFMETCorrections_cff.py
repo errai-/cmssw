@@ -115,12 +115,12 @@ patSmearedJets = cms.EDProducer("SmearedPATJetProducer",
     # For text files: both 'resolutionFile' and 'scaleFactorFile' must point to valid files
 
     # Read from GT
-    algopt = cms.string('AK4PFchs_pt'),
-    algo = cms.string('AK4PFchs'),
+    #algopt = cms.string('AK4PFchs_pt'),
+    #algo = cms.string('AK4PFchs'),
 
     # Or from text files
-    #resolutionFile = cms.FileInPath('path/to/resolution_file.txt'),
-    #scaleFactorFile = cms.FileInPath('path/to/scale_factor_file.txt'),
+    resolutionFile = cms.FileInPath('path/to/resolution_file.txt'),
+    scaleFactorFile = cms.FileInPath('path/to/scale_factor_file.txt'),
 
     # Gen jet matching
     genJets = cms.InputTag("ak4GenJetsNoNu"),
